@@ -1,0 +1,172 @@
+---
+title: "DataViz Project - Demographics Data EDA"
+author: "Michelle A. Zee"
+date: "3/22/2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE, 
+                      warning = FALSE,
+                      message = FALSE, 
+                      cache = FALSE)
+
+require(knitr)
+opts_knit$set(root.dir = "G:/My Drive/0 Data Viz/project/")
+
+library(dplyr)
+library(tidyverse)
+library(stargazer)
+library(ggpubr)
+library(sqldf)
+library(scales)
+library(tidycensus)
+library(plotly)
+```
+
+```{r}
+geo <- "public use microdata area"
+survey <- "acs1"
+state <- "NY"
+year <- 2019
+
+variables_acs1 <- c(hhincome = "B19013_001", ################## find population?
+                   
+                   poverty = "B17001_002",
+                   poverty_total = "B17001_001",
+                   
+                   med_age = "B01002_001",
+                   
+                   occupied_owner = "B25032_002",
+                   occupied_renter = "B25032_013",
+                   occupied_total = "B25032_001",
+                   
+                   occupied_owner_0.5less = "B25014_003",
+                   occupied_owner_0.51_1 = "B25014_004",
+                   occupied_owner_1.01_1.5 = "B25014_005",
+                   occupied_owner_1.51_2 = "B25014_006",
+                   occupied_owner_2plus = "B25014_007",
+                   
+                   occupied_renter_0.5less = "B25014_009",
+                   occupied_renter_0.51_1 = "B25014_010",
+                   occupied_renter_1.01_1.5 = "B25014_011",
+                   occupied_renter_1.51_2 = "B25014_012",
+                   occupied_renter_2plus = "B25014_013",
+                   
+                   med_value = "B25077_001",
+                   med_grossrent = "B25064_001",
+                   
+                   heating_gas = "B25040_002",
+                   heating_bottled = "B25040_003",
+                   heating_elect = "B25040_004",
+                   heating_fuel_oil = "B25040_005",
+                   heating_coal = "B25040_006",
+                   heating_wood = "B25040_007",
+                   heating_solar = "B25040_008",
+                   heating_other = "B25040_009",
+                   heating_none = "B25040_010",
+                   heating_total = "B25040_001"
+                   )
+
+variables_acs5 <- c(move_samehouse <- "B07001_017",
+                    move_samecounty <- "B07001_033",
+                    move_samestate <- "B07001_049",
+                    move_diffstate <- "B07001_065",
+                    move_abroad <- "B07001_081",
+                    move_total <- "B07001_001",
+                    
+                    born_samestate <- "B05002_003",
+                    born_diffstate <- "B05002_004",
+                    born_abroad <- "B05002_009",
+                    born_foreign <- "B05002_013",
+                    born_total <- "B05002_001",
+                    
+                    avghhsize_owner <- "B25010_002",
+                    avghhsize_renter <- "B25010_003",
+                    avghhsize_total <- "B25010_001")
+
+# use to search for variable names
+v19 <- load_variables(year = 2019,
+                      dataset = "acs5",
+                      cache = TRUE)
+
+# bronx, brooklyn, manhattan, queens, staten island
+nyc_geoid <- c(3603701:3603710, 3604001:3604018, 3603801:3603810, 3604101:3604114, 3603901:3603903) 
+
+df9 <- get_acs(geography = geo, variables = variables_acs1, survey = survey, state = state, year = 2009)
+df10 <- get_acs(geography = geo, variables = variables_acs1, survey = survey, state = state, year = 2010)
+df11 <- get_acs(geography = geo, variables = variables_acs1, survey = survey, state = state, year = 2011)
+df12 <- get_acs(geography = geo, variables = variables_acs1, survey = survey, state = state, year = 2012)
+df13 <- get_acs(geography = geo, variables = variables_acs1, survey = survey, state = state, year = 2013)
+df14 <- get_acs(geography = geo, variables = variables_acs1, survey = survey, state = state, year = 2014)
+df15 <- get_acs(geography = geo, variables = variables_acs1, survey = survey, state = state, year = 2015)
+df16 <- get_acs(geography = geo, variables = variables_acs1, survey = survey, state = state, year = 2016)
+df17 <- get_acs(geography = geo, variables = variables_acs1, survey = survey, state = state, year = 2017)
+df18 <- get_acs(geography = geo, variables = variables_acs1, survey = survey, state = state, year = 2018)
+df19 <- get_acs(geography = geo, variables = variables_acs1, survey = survey, state = state, year = 2019)
+
+df_total <- df9 %>%
+  select(GEOID, variable, est_2009 = estimate) %>%
+  left_join((df10 %>% select(est_2010 = estimate, GEOID, variable)), by = c("GEOID", "variable")) %>%
+  left_join((df11 %>% select(est_2011 = estimate, GEOID, variable)), by = c("GEOID", "variable")) %>%
+  left_join((df12 %>% select(est_2012 = estimate, GEOID, variable)), by = c("GEOID", "variable")) %>%
+  left_join((df13 %>% select(est_2013 = estimate, GEOID, variable)), by = c("GEOID", "variable")) %>%
+  left_join((df14 %>% select(est_2014 = estimate, GEOID, variable)), by = c("GEOID", "variable")) %>%
+  left_join((df15 %>% select(est_2015 = estimate, GEOID, variable)), by = c("GEOID", "variable")) %>%
+  left_join((df16 %>% select(est_2016 = estimate, GEOID, variable)), by = c("GEOID", "variable")) %>%
+  left_join((df17 %>% select(est_2017 = estimate, GEOID, variable)), by = c("GEOID", "variable")) %>%
+  left_join((df18 %>% select(est_2018 = estimate, GEOID, variable)), by = c("GEOID", "variable")) %>%
+  left_join((df19 %>% select(est_2019 = estimate, GEOID, variable)), by = c("GEOID", "variable"))
+
+df_total <- df_total %>%
+  filter(GEOID %in% nyc_geoid) %>%
+  mutate(borough = ifelse(GEOID %in% c(3603701:3603710), "Bronx",
+                          ifelse(GEOID %in% c(3604001:3604018), "Brooklyn",
+                                 ifelse(GEOID %in% c(3603801:3603810), "Manhattan",
+                                        ifelse(GEOID %in% c(3604101:3604114), "Queens",
+                                               ifelse(GEOID %in% c(3603901:3603903), "Staten Island", NA))))))
+
+df_total$PUMA <- gsub("360", "", df_total$GEOID)
+
+write_csv(df_total, "acs_1yr_2009_2019.csv")
+
+```
+
+```{r}
+### plots below have old references
+
+p_hhincome_10 <- ggplot(df10_new, aes(GEOID, estimate_hhincome, color = borough, alpha = 0.5)) +
+  geom_point() + 
+  scale_y_continuous(limits = c(0, 170000), labels = scales::dollar) +
+  labs(title = 2010) +
+  coord_flip()
+
+p_hhincome_19 <- ggplot(df19_new, aes(GEOID, estimate_hhincome, color = borough, alpha = 0.5)) + ###### inflation adjustment??
+  geom_point() + 
+  scale_y_continuous(limits = c(0, 170000), labels = scales::dollar) +
+  labs(title = 2019) +
+  coord_flip()
+
+ggarrange(p_hhincome_10, p_hhincome_19,
+          nrow = 2,
+          common.legend = TRUE)
+```
+
+```{r}
+p_poverty_10 <- ggplot(df10_new, aes(GEOID, poverty_pct, color = borough, alpha = 0.5)) +
+  geom_point() + 
+  scale_y_continuous(limits = c(0, 0.45)) +
+  labs(title = 2010) +
+  coord_flip()
+
+p_poverty_19 <- ggplot(df19_new, aes(GEOID, poverty_pct, color = borough, alpha = 0.5)) +
+  geom_point() + 
+  scale_y_continuous(limits = c(0, 0.45)) +
+  labs(title = 2019) +
+  coord_flip()
+
+ggarrange(p_poverty_10, p_poverty_19,
+          nrow = 2,
+          common.legend = TRUE)
+```
+
