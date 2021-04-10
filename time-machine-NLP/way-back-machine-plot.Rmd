@@ -8,8 +8,25 @@ output: html_document
 ## way-back-machine data
 
 ```{r error=TRUE, message=FALSE, warning=FALSE}
+library(lubridate)
+library(dplyr)
+library(tm)
+library(tidytext)
+library(SnowballC)
+library(ggplot2)
+library(wordcloud)
 
 df = read.csv("TimeMachine.csv")
-head(df)
+
+df_clean = df %>%
+  mutate(date = substr(date, 1, 8)) %>%
+  mutate(date = ymd(date)) %>%
+  select(-X)%>%
+  mutate(clean_text = tolower(text)) %>%
+  mutate(clean_text = removeNumbers(clean_text)) %>%
+  mutate(clean_text = stripWhitespace(clean_text)) %>%
+  mutate(clean_text = removeWords(clean_text, stopwords("en")))
+
+corpus = DataframeSource(df_clean)
 
 ```
