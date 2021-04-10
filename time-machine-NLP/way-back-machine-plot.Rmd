@@ -1,0 +1,15 @@
+---
+title: "time-machine-word-cloud"
+author: "yjw2106"
+date: "4/10/2021"
+output: html_document
+---
+
+## way-back-machine data
+
+```{r error=TRUE, message=FALSE, warning=FALSE}
+
+df = read.csv("TimeMachine.csv")
+head(df)
+
+```
