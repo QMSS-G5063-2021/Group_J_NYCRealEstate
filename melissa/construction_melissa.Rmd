@@ -1,0 +1,166 @@
+---
+title: "Construction Data"
+author: "Melissa Feeney"
+date: "4/10/2021"
+always_allow_html: yes
+output: 
+  html_document:
+    keep_md: true
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+knitr::opts_chunk$set(echo = TRUE,
+                      fig.path="images/",
+                      cache.path="cache/",
+                      cache=FALSE,
+                      echo=TRUE,
+                      message=FALSE,
+                      warning=FALSE) 
+library(knitr)
+
+options(repos="https://cran.rstudio.com" )
+```
+
+```{r, warning = FALSE, message = FALSE, eval = TRUE, fig.height = 8, fig.width = 10}
+# Load required packages
+library(readxl)
+library(dplyr)
+library(httr)
+library(ggplot2)
+library(tidyverse)
+library(magrittr)
+library(DT)
+library(stringr)
+library(rgdal)
+library(tmap)
+library(tmaptools)
+library(rgeos)
+library(RColorBrewer)
+library(sp)
+library(usethis)
+library(devtools)
+#devtools::install_github("rstudio/leaflet")
+library(leaflet)
+library(htmlwidgets)
+library(stringr)
+options(dplyr.summarise.inform = F)
+options(rgdal_show_exportToProj4_warnings=none)
+require(scales)
+library(ggmap)
+library(htmltools)
+
+```
+
+
+```{r, warning = FALSE, message = FALSE, eval = TRUE, fig.height = 8, fig.width = 10}
+# Set wd to location of data files
+setwd('/Users/Melissa/Desktop/Data Visualization SP21/Group_J_NYCRealEstate/melissa')
+
+#census_block <- read.csv('HousingDB_by_CensusBlock.csv') # no
+#census_tract <- read.csv('HousingDB_by_CensusTract.csv') # no
+#city_council <- read.csv('HousingDB_by_CityCouncilDistrict.csv') # no
+#com_district <- read.csv('HousingDB_by_CommunityDistrict.csv') # no
+#nta <- read.csv('HousingDB_by_NTA.csv') # no
+pre_puma <- read.csv('HousingDB_by_PUMA.csv') #by puma
+pre_post2010 <- read.csv('HousingDB_post2010.csv') # detailed
+
+#### Data Notes from Data Dictionary
+# Job Types = Mapped from dob_jobapplications field jobtype as follows:
+# A1 to Alteration
+# DM to Demolition
+# NB to New Building
+# Administrative records are removed based on this field in combination with job_description.
+
+# ResidFlaf = This field is used to identify jobs in buildings containing residential uses. A value of "residential" indicates that the job affects residential units in some way through new construction, alteration, or demolition. Only those jobs with a value of "residential" are included in the housing database. Manual research was conducted at DCP to help ensure that all work on buildings with residences receive this flag, though some records may remain misclassified.
+
+# NonresidFlag = This field is used to identify jobs in buildings containing non-residential uses. A value of "non-residential" indicates that the job affects some use type beyond residential, including commercial, industrial, or community facility uses. Mixed-use buildings will have values in both the Resid_Flag and Nonresid_Flag, since they contain both residential and nonresidential uses, but having flags in both of those columns does not necessarily mean that it is a mixed-use development since the flags do not distinguish between the initial and proposed uses in the building.
+
+# Occ_Init = Description of the existing occupancy type at the time of the job application. This indicates what a site was used for before the proposed job. It is a more descriptive recode of the occupancy code that the applicant submitted to DOB as the initial occupancy type of the building. Note that the applicant may only choose one occupancy code, even in a building containing multiple uses, so this code is only able to describe one of many possible uses.
+
+# Occ_Prop = Description of the proposed occupancy type at the time of the job application. This indicates what a site will be used for after the proposed job is complete. It is a more descriptive recode of the occupancy code that the applicant submitted to DOB as the proposed occupancy type of the building. Note that the applicant may only choose one occupancy code, even in a building containing multiple uses, so this code is only able to describe one of many possible uses.
+```
+
+
+```{r, warning = FALSE, message = FALSE, eval = TRUE, fig.height = 8, fig.width = 10}
+# Construction types
+# Add puma shapefiles?
+# Get data into dataframe
+
+puma <- pre_puma %>% select(boro, puma2010, pumaname10)
+
+post2010 <- pre_post2010 %>%
+            select(Job_Number, Job_Type, ResidFlag, NonresFlag, Job_Status, CompltYear, Boro, AddressSt, Occ_Init, Occ_Prop, Job_Desc, DateComplt, Landmark, Ownership, NTAName10, PUMA2010, Latitude, Longitude) %>% left_join(puma, by = c('PUMA2010' = 'puma2010'))
+
+head(post2010)
+
+
+# First focus on 2020 completed projects- test
+#comp_2020 <- post2010 %>% dplyr::filter(CompltYear == 2020)
+
+
+##############
+
+# Total Map
+# Prep Pop-up details
+popup_content <- paste('Job Number:',post2010$Job_Number,'<br/>',
+                       'Job Status:',post2010$Job_Status,'<br/>',
+                       'Initial Occupier:',post2010$Occ_Init,'<br/>',
+                       'Proposed Occupier:',post2010$Occ_Prop,'<br/>',
+                       'Landmark Status:',post2010$Landmark,'<br/>',
+                       'Building Ownership:',post2010$Ownership,'<br/>',
+                       'PUMA:',post2010$PUMA2010,'<br/>')
+                       
+# Map Title
+map_title <- tags$p(tags$style('p {color: black; font-size: 20px}'),
+                    tags$b('Construction Across NYC'))
+
+
+# Color Palette 1 for the Map: Job Type
+pal1 = colorFactor('Set1', domain = post2010$Job_Type) 
+color_Job_Type = pal1(post2010$Job_Type)
+
+
+# Color Palette 2 for the Map: Job Completion Year
+pal2 = colorFactor('Paired', domain = post2010$CompltYear) 
+color_CompltYear = pal2(post2010$CompltYear)
+
+# Color Palette 3 for the Map: Boro
+pal3 = colorFactor('Dark2', domain = post2010$Boro) 
+color_Boro = pal3(post2010$Boro)
+
+# Map- not printing because of the map title when knitting
+# Add ability to check the completion year and job type
+post2010_map <- leaflet(post2010) %>%
+                   addTiles() %>%
+                   addProviderTiles(providers$Wikimedia) %>% 
+  
+                    # Add Job Type Data
+                   addCircles(color = color_Job_Type, 
+                             popup = popup_content,
+                             group = 'Toggle: Job Type') %>%
+                   addLegend(pal = pal1, values = ~post2010$Job_Type, title = 'Job Type', position = 'bottomright') %>%
+                  
+                  # Add Completion Year Data
+                   addCircles(color = color_CompltYear, 
+                              popup = popup_content,
+                              group = 'Toggle: Year of Project Completion') %>%
+                   addLegend(pal = pal2, values = ~post2010$CompltYear, title = 'Year of Project Completion', position = 'bottomright') %>%
+
+                    # Add Boro Data
+                   addCircles(color_Boro, 
+                              popup = popup_content,
+                              group = 'Toggle: Borough') %>%
+                   addLegend(pal = pal3, values = ~post2010$Boro, title = 'Year of Project Completion', position = 'bottomright') %>%
+  
+                  # Layers to add toggle ability
+                   addLayersControl(baseGroups = c('Toggle: Job Type', 'Toggle: Year of Project Completion', 'Toggle: Borough'),
+                                  options = layersControlOptions(collapsed = FALSE), position = 'bottomright') %>%
+  
+                    # Add map title
+                   addControl(map_title, position = 'topright')
+
+post2010_map
+
+```
