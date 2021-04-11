@@ -21,12 +21,41 @@ df = read.csv("TimeMachine.csv")
 df_clean = df %>%
   mutate(date = substr(date, 1, 8)) %>%
   mutate(date = ymd(date)) %>%
+  mutate(year = year(date)) %>%
   select(-X)%>%
   mutate(clean_text = tolower(text)) %>%
   mutate(clean_text = removeNumbers(clean_text)) %>%
   mutate(clean_text = stripWhitespace(clean_text)) %>%
   mutate(clean_text = removeWords(clean_text, stopwords("en")))
 
-corpus = DataframeSource(df_clean)
+# - function to create wordcloud based on year and neighborhood selected
+draw.wordcloud = function(select_neighborhood, select_year) {
+  cloud.year = df_clean %>%
+    filter(neighborhood==select_neighborhood) %>%
+    filter(year == select_year) %>%
+    head(1) %>%
+    select(year, clean_text)
+  
+  cloud.hist = df_clean %>%
+    filter(neighborhood==select_neighborhood) %>%
+    arrange(desc(-1*year)) %>%
+    head(1) %>%
+    select(year, clean_text)
+  
+  combined = c(cloud.year$clean_text, cloud.hist$clean_text)
+  corpus = Corpus(VectorSource(combined))
+  tdm = TermDocumentMatrix(corpus)
+  tdm = as.matrix(tdm)
+  colnames(tdm) = c(cloud.year$year, cloud.hist$year)
+  
+  # comparison cloud
+  wordcloud = comparison.cloud(tdm, random.order=FALSE, 
+                   colors = c("#FF0099", "#6600CC"), title.size=1.5, max.words=500)
+  
+  return(wordcloud)
+  
+}
+
+draw.wordcloud(select_neighborhood = "East Village", select_year = 2021)
 
 ```
