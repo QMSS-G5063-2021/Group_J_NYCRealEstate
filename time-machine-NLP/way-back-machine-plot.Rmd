@@ -56,6 +56,6 @@ draw.wordcloud = function(select_neighborhood, select_year) {
   
 }
 
-draw.wordcloud(select_neighborhood = "East Village", select_year = 2021)
+draw.wordcloud(select_neighborhood = "Hamilton Heights", select_year = 2020)
 
 ```
