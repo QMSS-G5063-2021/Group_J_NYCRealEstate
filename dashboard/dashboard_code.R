@@ -15,6 +15,7 @@ library(tidytext)
 library(SnowballC)
 library(ggplot2)
 library(wordcloud)
+library(plotly)
 
 setwd("C:/Users/natal/Desktop/QMSS/Spring 2021/Data_Visualization/project/Group_J_NYCRealEstate/")
 
@@ -219,9 +220,13 @@ ui <- navbarPage("Manhattan Construction",
                                                  "Maximum Number of Words:",
                                                  min = 50,  max = 300,  value = 100)),
                             fluidRow(
-                              box(plotOutput("wordcloud"), width = 400, height = 600),
+                              plotOutput("wordcloud")),
+                            fluidRow(
+                              plotlyOutput("wiki_edits_through_time")),
+                            fluidRow(
+                              plotOutput("sentiment_score"))
                             )
-                          ))
+                          )
 )
 
 ## -------------------- server
@@ -424,6 +429,26 @@ server <- function(input, output) {
     # comparison cloud
     comparison.cloud(tdm, random.order=FALSE,
                                  colors = c(dark2[[1]], dark2[[2]]), title.size=1, max.words=input$max)
+  })
+  
+  output$wiki_edits_through_time <- renderPlotly({
+    df = timemachine %>%
+      group_by(year, neighborhood) %>%
+      summarise(total = n())
+    
+    ggplotly(
+      ggplot(df, aes(year, total, color=neighborhood)) +
+      geom_line(size=1.5)+
+      gghighlight(neighborhood == input$nlp_neighborhood)+
+      scale_color_manual(values=dark2) + 
+      labs(x = "Year", y="Total Number of Wikipedia Page Revisions",
+           title="Number of Wikipedia Page Revisions by Year") +
+      theme_minimal()
+    )
+  })
+  
+  output$sentiment_socre <- renderPlot({
+    
   })
 }
 

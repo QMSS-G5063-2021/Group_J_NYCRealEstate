@@ -59,3 +59,28 @@ draw.wordcloud = function(select_neighborhood, select_year) {
 draw.wordcloud(select_neighborhood = "East Village", select_year = 2021)
 
 ```
+
+# line graph of when it was first published and number of changes through time
+# line graph of sentiment through time
+# most used word by year
+# most common words 2010 vs 2021
+```{r, message=FALSE, warning=FALSE}
+
+dark2 <- colorRampPalette(brewer.pal(8, "Dark2"))(10)
+
+test = df_clean %>%
+  group_by(year, neighborhood) %>%
+  summarise(total = n())
+
+ggplot(test, aes(year, total, color=neighborhood)) +
+  geom_line(size=1.5)+
+  gghighlight(neighborhood == "Chelsea")+
+  scale_color_manual(values=dark2) + 
+  labs(x = "Year", y="Total Number of Wikipedia Page Revisions",
+       title="Number of Wikipedia Page Revisions by Year for Manhattan Neighborhoods") +
+  theme_minimal()
+
+```
+
+
+#
