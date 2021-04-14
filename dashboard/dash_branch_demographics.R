@@ -111,12 +111,10 @@ income_group <- aggregate(x = income$estimate,
                        FUN=mean)
 
 names(income_group)[3] <- "median_income"
-#View(income_group)
-
 
 # gender 
-#View(acs1_manhattan)
 
+#View(acs1_manhattan)
 gender_female <- acs1_manhattan %>%
   filter(variable == "female") %>%
   pivot_longer(names_to = "year", values_to = "estimate", cols = c(est_2009:est_2019)) %>%
@@ -151,6 +149,24 @@ gender = rbind(gender_female,gender_male)
  gender_clean$percentage <- label_percent()(gender_clean$fraction)
  gender_clean$label <- paste0(gender_clean$variable, "\n value: ", gender_clean$percentage)
 
+ 
+ # Move situation 
+ View(acs5_manhattan)
+ 
+ library(tidyverse)
+ 
+ move <-  acs5_manhattan %>%
+   filter(variable == "B07001_017" | variable == "B07001_033" |variable == "B07001_049"|variable == "B07001_065"|variable == "B07001_081")
+ 
+ # segmenting data 
+ 
+move_clean <- move %>% 
+   group_by(puma_code) %>% 
+   mutate(fraction = est_2019/sum(est_2019)) %>% 
+   ungroup 
+ 
+ View(move_clean)
+ 
 
 
 ui <- navbarPage("Manhattan Construction",
@@ -170,7 +186,8 @@ ui <- navbarPage("Manhattan Construction",
                               box(plotOutput("median_age")),
                               box(plotOutput("population")),
                               box(plotOutput("income")),
-                              box(plotOutput("gender"))
+                              box(plotOutput("gender")),
+                              box(plotOutput("move"))
                               )
                             )
                           )
@@ -228,6 +245,17 @@ server <- function(input, output) {
     
   }) 
   
+  
+  output$move <- renderPlot({
+    
+    ggplot(data = subset(x = move_clean, puma_name == input$puma), aes(x="", y=fraction, fill=variable))+
+      geom_bar(width = 1, stat = "identity") +
+      scale_fill_brewer(palette="Blues")+
+      theme_minimal()+
+      coord_polar("y", start=0)
+    
+    
+  }) 
   
   }
 
