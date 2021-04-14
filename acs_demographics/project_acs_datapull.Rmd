@@ -30,7 +30,9 @@ survey <- "acs1"
 state <- "NY"
 year <- 2019
 
-variables_acs1 <- c(hhincome = "B19013_001", ################## find population?
+variables_acs1 <- c(hhincome = "B19013_001", 
+                    
+                   population = "B01003_001",
                    
                    poverty = "B17001_002",
                    poverty_total = "B17001_001",
@@ -93,6 +95,7 @@ v19 <- load_variables(year = 2019,
 # bronx, brooklyn, manhattan, queens, staten island
 nyc_geoid <- c(3603701:3603710, 3604001:3604018, 3603801:3603810, 3604101:3604114, 3603901:3603903) 
 
+# acs1 pull
 df9 <- get_acs(geography = geo, variables = variables_acs1, survey = survey, state = state, year = 2009)
 df10 <- get_acs(geography = geo, variables = variables_acs1, survey = survey, state = state, year = 2010)
 df11 <- get_acs(geography = geo, variables = variables_acs1, survey = survey, state = state, year = 2011)
@@ -128,7 +131,30 @@ df_total <- df_total %>%
 
 df_total$PUMA <- gsub("360", "", df_total$GEOID)
 
-write_csv(df_total, "acs_1yr_2009_2019.csv")
+#write_csv(df_total, "acs_1yr_2009_2019.csv")
+
+
+# acs5 pull
+df14 <- get_acs(geography = geo, variables = variables_acs5, survey = "acs5", state = state, year = 2014)
+df19 <- get_acs(geography = geo, variables = variables_acs5, survey = "acs5", state = state, year = 2019)
+
+df_total <- df14 %>% select(GEOID, variable, est_2009 = estimate) %>%
+  left_join((df19 %>% select(est_2019 = estimate, GEOID, variable)), by = c("GEOID", "variable"))
+
+df_total <- df_total %>%
+  filter(GEOID %in% nyc_geoid) %>%
+  mutate(borough = ifelse(GEOID %in% c(3603701:3603710), "Bronx",
+                          ifelse(GEOID %in% c(3604001:3604018), "Brooklyn",
+                                 ifelse(GEOID %in% c(3603801:3603810), "Manhattan",
+                                        ifelse(GEOID %in% c(3604101:3604114), "Queens",
+                                               ifelse(GEOID %in% c(3603901:3603903), "Staten Island", NA))))))
+
+df_total$PUMA <- gsub("360", "", df_total$GEOID)
+
+df_total <- df_total %>%
+  left_join(v19, by = c("variable" = "name"))
+
+#write_csv(df_total, "acs_5yr_2014_and_2019.csv")
 
 ```
 
