@@ -94,7 +94,6 @@ pop_group <- aggregate(x = population$estimate,
                         FUN=mean)
 
 names(pop_group)[3] <- "median_population"
-#View(pop_group)
 
 
 # Income level 
@@ -138,7 +137,6 @@ gender = rbind(gender_female,gender_male)
    mutate(fraction = estimate/sum(estimate)) %>% 
    ungroup 
 
- # View(gender_clean)
  gender_clean$ymax <- gender_clean$fraction
  # Compute the bottom of each rectangle
  gender_clean$ymin <- c(0, head(gender_clean$ymax, n=-1))
@@ -151,9 +149,7 @@ gender = rbind(gender_female,gender_male)
 
  
  # Move situation 
- View(acs5_manhattan)
- 
- library(tidyverse)
+# View(acs5_manhattan)
  
  move <-  acs5_manhattan %>%
    filter(variable == "B07001_017" | variable == "B07001_033" |variable == "B07001_049"|variable == "B07001_065"|variable == "B07001_081")
@@ -165,9 +161,6 @@ move_clean <- move %>%
    mutate(fraction = est_2019/sum(est_2019)) %>% 
    ungroup 
  
- View(move_clean)
- 
-
 
 ui <- navbarPage("Manhattan Construction",
                 
@@ -223,13 +216,22 @@ server <- function(input, output) {
   
   
   output$income <- renderPlot({
+
+    ggplot(income_group, aes(x = year, y = median_income, fill = puma_name)) +
+      geom_area(color = "white", alpha = 0.4) +
+      scale_fill_brewer(palette = "Paired") +
+      scale_x_continuous(breaks= c(2009:2019)) +
+     # gghighlight(puma_name == input$puma) +
+      scale_y_continuous(expand = c(0, 0), labels = scales::dollar) +
+      labs(title = "",
+           subtitle = "Median Household Income by Neighborhood, 2009-2019",
+           caption = "Source: ACS",
+           x = NULL,
+           y = "Median Household Income ($)",
+           fill = NULL) +
+      theme(panel.grid.major.x = element_blank(),
+            legend.position = "bottom")
     
-    ggplot(income_group, aes(as.factor(year), median_income, colour=puma_name)) + 
-      geom_line(aes(group = puma_name)) + 
-      gghighlight(puma_name == input$puma) +
-      ggtitle("Neighborhood Median Income Through Years") +
-      xlab("Year") + ylab("Median Income")+
-      geom_point()
     
   }) 
   
