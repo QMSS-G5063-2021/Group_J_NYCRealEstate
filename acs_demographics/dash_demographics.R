@@ -61,7 +61,7 @@ construction_manhattan <- construction %>% filter(borough == "Manhattan")
 input_boro <- unique(acs1$borough)
 input_puma <- puma$puma_name[order(unique(puma$puma_name), puma$puma_name)]
 
-#View(acs1_manhattan)
+# View(acs1_manhattan)
 
 
 
@@ -114,6 +114,42 @@ names(income_group)[3] <- "median_income"
 #View(income_group)
 
 
+# gender 
+#View(acs1_manhattan)
+
+gender_female <- acs1_manhattan %>%
+  filter(variable == "female") %>%
+  pivot_longer(names_to = "year", values_to = "estimate", cols = c(est_2009:est_2019)) %>%
+  mutate(year = as.numeric(gsub("est_", "", year))) %>%
+  select(-GEOID)
+
+gender_male <- acs1_manhattan %>%
+  filter(variable == "male") %>%
+  pivot_longer(names_to = "year", values_to = "estimate", cols = c(est_2009:est_2019)) %>%
+  mutate(year = as.numeric(gsub("est_", "", year))) %>%
+  select(-GEOID)
+
+gender = rbind(gender_female,gender_male)
+
+ gender_2019 <- gender %>%
+  filter (year == 2019)
+
+ library(tidyverse)
+ gender_clean <- gender_2019 %>% 
+   group_by(puma_code) %>% 
+   mutate(fraction = estimate/sum(estimate)) %>% 
+   ungroup 
+
+ # View(gender_clean)
+ gender_clean$ymax <- gender_clean$fraction
+ # Compute the bottom of each rectangle
+ gender_clean$ymin <- c(0, head(gender_clean$ymax, n=-1))
+ # Compute label position
+ gender_clean$labelPosition <- (gender_clean$ymax + gender_clean$ymin) / 2
+ 
+ # Compute a good label
+ gender_clean$percentage <- label_percent()(gender_clean$fraction)
+ gender_clean$label <- paste0(gender_clean$variable, "\n value: ", gender_clean$percentage)
 
 
 
@@ -133,7 +169,8 @@ ui <- navbarPage("Manhattan Construction",
                             fluidRow(
                               box(plotOutput("median_age")),
                               box(plotOutput("population")),
-                              box(plotOutput("income"))
+                              box(plotOutput("income")),
+                              box(plotOutput("gender"))
                               )
                             )
                           )
@@ -180,23 +217,21 @@ server <- function(input, output) {
   }) 
   
   
-  
-  
-  
-  
-  
-  
+  output$gender <- renderPlot({
+    
+    ggplot(data = subset(x = gender_clean, puma_name == input$puma), aes(x="", y=fraction, fill=variable))+
+      geom_bar(width = 1, stat = "identity") +
+      scale_fill_brewer(palette="Blues")+
+      theme_minimal()+
+      coord_polar("y", start=0)
+
+    
+  }) 
   
   
   }
 
 shinyApp(ui, server)
-
-
-
-
-
-
 
 
 
