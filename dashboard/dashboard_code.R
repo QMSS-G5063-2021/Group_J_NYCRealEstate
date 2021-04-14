@@ -208,7 +208,7 @@ ui <- navbarPage("Manhattan Construction",
                                           label = "Choose Neighborhood:",
                                           choices = input_neighborhood,
                                           selected= "Chinatown",
-                                          width = "50%")),
+                                          width = "50%", height="50%")),
                             fluidRow(sliderInput( inputId = "nlp_year",
                                                   label="Choose a Year",
                                                   value=2019, min=2010, max=2021),
@@ -218,14 +218,14 @@ ui <- navbarPage("Manhattan Construction",
                             fluidRow(
                               column(3,p("Chosen Year"),offset=4),
                               plotOutput("wordcloud"),
-                              column(3, p("2010"), offset=4),
+                              column(3, p("2010"), offset=4)),
                             fluidRow(
                               plotlyOutput("wiki_edits_through_time")),
                             fluidRow(
                               column(3),
-                              plotOutput("sentiment_score"))
+                              plotlyOutput("sentiment_score"))
                             )
-                          ))
+                          )
 )
 
 ## -------------------- server
@@ -459,17 +459,16 @@ server <- function(input, output) {
     )
   })
   
-  output$sentiment_score <- renderPlot({
-    
-    df_sentiment = df_sentiment %>%
-      filter(neighborhood == input$nlp_neighborhood)
-    
-    ggplot(df_sentiment, aes(year, score, color=neighborhood)) +
-      geom_line(size=1) + theme_minimal() +
-      gghighlight(neighborhood == input$nlp_neighborhood)+
-      scale_color_manual(values=dark2) + 
-      labs(x = "Year", y="Positive/Negative Sentiment Score",
-           title="Neighborhood Sentiment Through Time")
+  output$sentiment_score <- renderPlotly({
+  
+    ggplotly(
+        ggplot(df_sentiment, aes(year, score, color=neighborhood)) +
+          geom_line(size=1) + theme_minimal() +
+          gghighlight(neighborhood == input$nlp_neighborhood)+
+          scale_color_manual(values=dark2) + 
+          labs(x = "Year", y="Positive/Negative Sentiment Score",
+               title="Neighborhood Sentiment Through Time")
+    )
   })
 }
 
