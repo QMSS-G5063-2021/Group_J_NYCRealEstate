@@ -59,3 +59,59 @@ draw.wordcloud = function(select_neighborhood, select_year) {
 draw.wordcloud(select_neighborhood = "Hamilton Heights", select_year = 2020)
 
 ```
+
+# line graph of when it was first published and number of changes through time
+# line graph of sentiment through time
+# most used word by year
+# most common words 2010 vs 2021
+```{r, message=FALSE, warning=FALSE}
+
+dark2 <- colorRampPalette(brewer.pal(8, "Dark2"))(10)
+
+test = df_clean %>%
+  group_by(year, neighborhood) %>%
+  summarise(total = n())
+
+ggplot(test, aes(year, total, color=neighborhood)) +
+  geom_line(size=1.5)+
+  gghighlight(neighborhood == "Chelsea")+
+  scale_color_manual(values=dark2) + 
+  labs(x = "Year", y="Total Number of Wikipedia Page Revisions",
+       title="Number of Wikipedia Page Revisions by Year for Manhattan Neighborhoods") +
+  theme_minimal()
+
+```
+```{r, message=FALSE, warning=FALSE}
+
+dict = tidytext::sentiments
+pos = dict %>% filter(sentiment == "positive") %>% select(word)
+neg = dict %>% filter(sentiment == "negative") %>% select(word)
+
+sentiment <- function(words=c("really great good stuff bad")){
+  require(quanteda)
+  tok <- quanteda::tokens(words)
+  pos.count <- sum(tok[[1]]%in%pos[[1]])
+  positive_words = cat("\n positive words:",tok[[1]][which(tok[[1]]%in%pos[[1]])],"\n")
+  neg.count <- sum(tok[[1]]%in%neg[[1]])
+  negative_words = cat("\n negative words:",tok[[1]][which(tok[[1]]%in%neg[[1]])],"\n")
+  out <- (pos.count - neg.count)/(pos.count+neg.count)
+  cat("\n Tone of Document:", out)
+  
+  out = ifelse(is.na(out), 0, out)
+  return (out)
+}
+
+df_sentiment=df_clean
+df_sentiment$sentiment = lapply(df_sentiment$clean_text, sentiment)
+
+df_sentiment_clean = df_sentiment %>%
+  group_by(neighborhood, year) %>%
+  unnest(sentiment) %>%
+  summarise(score = mean(sentiment))
+
+write.csv(df_sentiment_clean, "neighborhood_sentiment_scores.csv")
+
+
+```
+
+#

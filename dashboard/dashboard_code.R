@@ -9,8 +9,16 @@ library(RColorBrewer)
 library(leaflet)
 library(gghighlight)
 library(plm)
+library(lubridate)
+library(tm)
+library(tidytext)
+library(SnowballC)
+library(ggplot2)
+library(wordcloud)
+library(plotly)
+library(quanteda)
 
-setwd("G:/My Drive/0 Data Viz/project/Group_J_NYCRealEstate/")
+setwd("C:/Users/natal/Desktop/QMSS/Spring 2021/Data_Visualization/project/Group_J_NYCRealEstate/")
 
 # ------ load data
 
@@ -26,6 +34,9 @@ puma <- read_csv("construction_data/HousingDB_by_PUMA.csv") %>%
 
 pre_puma <- read.csv('construction_data/HousingDB_by_PUMA.csv') # by puma
 pre_post2010 <- read.csv('construction_data/HousingDB_post2010.csv') # detailed
+
+timemachine <- read_csv("time-machine-NLP/TimeMachine.csv")
+df_sentiment <- read_csv("time-machine-NLP/neighborhood_sentiment_scores.csv")
 
 # ------ edit variables
 
@@ -96,10 +107,21 @@ post2010 <- pre_post2010 %>%
          NTAName10, PUMA2010, Latitude, Longitude) %>% 
   left_join(puma, by = c('PUMA2010' = 'puma2010'))
 
+# - clean TimeMachine.csv data for text analysis
+timemachine = timemachine %>%
+  mutate(date = substr(date, 1, 8)) %>%
+  mutate(date = ymd(date)) %>%
+  mutate(year = year(date)) %>%
+  mutate(clean_text = tolower(text)) %>%
+  mutate(clean_text = removeNumbers(clean_text)) %>%
+  mutate(clean_text = stripWhitespace(clean_text)) %>%
+  mutate(clean_text = removeWords(clean_text, stopwords("en")))
+
 # ------- labels
 year_lab <- "Year"
 age_lab <- "Median Age"
 permit_lab <- "Number of Permits"
+input_neighborhood <- unique(timemachine$neighborhood)
 
 unique(housing_acs$variable)
 
@@ -176,7 +198,34 @@ ui <- navbarPage("Manhattan Construction",
                               )
                           ),
                  
-                 tabPanel("Neighborhoods in Words")
+                 tabPanel("Neighborhoods in Words",
+                          mainPanel(
+                            fluidRow(
+                              h2("How are neighborhoods described through time?"),
+                              p("The below compares and contrasts words used to describe a Manhattan neighborhood through two points in time."),
+                              
+                              selectInput("nlp_neighborhood",
+                                          label = "Choose Neighborhood:",
+                                          choices = input_neighborhood,
+                                          selected= "Chinatown",
+                                          width = "50%")),
+                            fluidRow(sliderInput( inputId = "nlp_year",
+                                                  label="Choose a Year",
+                                                  value=2019, min=2010, max=2021),
+                                     sliderInput("max",
+                                                 "Maximum Number of Words:",
+                                                 min = 50,  max = 300,  value = 100)),
+                            fluidRow(
+                              column(3,p("Chosen Year"),offset=4),
+                              plotOutput("wordcloud"),
+                              column(3, p("2010"), offset=4),
+                            fluidRow(
+                              plotlyOutput("wiki_edits_through_time")),
+                            fluidRow(
+                              column(3),
+                              plotOutput("sentiment_score"))
+                            )
+                          ))
 )
 
 ## -------------------- server
@@ -368,6 +417,59 @@ server <- function(input, output) {
 
     post2010_map
 
+  })
+  
+  output$wordcloud <- renderPlot({
+    cloud.year = timemachine %>%
+      filter(neighborhood==input$nlp_neighborhood) %>%
+      filter(year == input$nlp_year) %>%
+      head(1) %>%
+      select(year, clean_text)
+    
+    cloud.hist = timemachine %>%
+      filter(neighborhood==input$nlp_neighborhood) %>%
+      arrange(desc(-1*year)) %>%
+      head(1) %>%
+      select(year, clean_text)
+    
+    combined = c(cloud.year$clean_text, cloud.hist$clean_text)
+    corpus = Corpus(VectorSource(combined))
+    tdm = TermDocumentMatrix(corpus)
+    tdm = as.matrix(tdm)
+    colnames(tdm) = c(cloud.year$year, cloud.hist$year)
+    
+    # comparison cloud
+    comparison.cloud(tdm, random.order=FALSE,
+                                 colors = c(dark2[[1]], dark2[[2]]), title.size=1, max.words=input$max)
+  })
+  
+  output$wiki_edits_through_time <- renderPlotly({
+    df = timemachine %>%
+      group_by(year, neighborhood) %>%
+      summarise(total = n())
+    
+    ggplotly(
+      ggplot(df, aes(year, total, color=neighborhood)) +
+      geom_line(size=1)+
+      gghighlight(neighborhood == input$nlp_neighborhood)+
+      scale_color_manual(values=dark2) + 
+      labs(x = "Year", y="Total Number of Wikipedia Page Revisions",
+           title="Number of Wikipedia Page Revisions by Year") +
+      theme_minimal()
+    )
+  })
+  
+  output$sentiment_score <- renderPlot({
+    
+    df_sentiment = df_sentiment %>%
+      filter(neighborhood == input$nlp_neighborhood)
+    
+    ggplot(df_sentiment, aes(year, score, color=neighborhood)) +
+      geom_line(size=1) + theme_minimal() +
+      gghighlight(neighborhood == input$nlp_neighborhood)+
+      scale_color_manual(values=dark2) + 
+      labs(x = "Year", y="Positive/Negative Sentiment Score",
+           title="Neighborhood Sentiment Through Time")
   })
 }
 
