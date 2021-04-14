@@ -39,6 +39,10 @@ variables_acs1 <- c(hhincome = "B19013_001",
                    
                    med_age = "B01002_001",
                    
+                   gender_sum = "B01001_001",
+                   male = "B01001_002",
+                   female = "B01001_026",
+                    
                    occupied_owner = "B25032_002",
                    occupied_renter = "B25032_013",
                    occupied_total = "B25032_001",
