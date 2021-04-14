@@ -81,6 +81,37 @@ ggplot(test, aes(year, total, color=neighborhood)) +
   theme_minimal()
 
 ```
+```{r, message=FALSE, warning=FALSE}
 
+dict = tidytext::sentiments
+pos = dict %>% filter(sentiment == "positive") %>% select(word)
+neg = dict %>% filter(sentiment == "negative") %>% select(word)
+
+sentiment <- function(words=c("really great good stuff bad")){
+  require(quanteda)
+  tok <- quanteda::tokens(words)
+  pos.count <- sum(tok[[1]]%in%pos[[1]])
+  positive_words = cat("\n positive words:",tok[[1]][which(tok[[1]]%in%pos[[1]])],"\n")
+  neg.count <- sum(tok[[1]]%in%neg[[1]])
+  negative_words = cat("\n negative words:",tok[[1]][which(tok[[1]]%in%neg[[1]])],"\n")
+  out <- (pos.count - neg.count)/(pos.count+neg.count)
+  cat("\n Tone of Document:", out)
+  
+  out = ifelse(is.na(out), 0, out)
+  return (out)
+}
+
+df_sentiment=df_clean
+df_sentiment$sentiment = lapply(df_sentiment$clean_text, sentiment)
+
+df_sentiment_clean = df_sentiment %>%
+  group_by(neighborhood, year) %>%
+  unnest(sentiment) %>%
+  summarise(score = mean(sentiment))
+
+write.csv(df_sentiment_clean, "neighborhood_sentiment_scores.csv")
+
+
+```
 
 #

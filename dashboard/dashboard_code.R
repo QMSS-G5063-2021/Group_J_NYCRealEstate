@@ -16,6 +16,7 @@ library(SnowballC)
 library(ggplot2)
 library(wordcloud)
 library(plotly)
+library(quanteda)
 
 setwd("C:/Users/natal/Desktop/QMSS/Spring 2021/Data_Visualization/project/Group_J_NYCRealEstate/")
 
@@ -35,6 +36,7 @@ pre_puma <- read.csv('construction_data/HousingDB_by_PUMA.csv') # by puma
 pre_post2010 <- read.csv('construction_data/HousingDB_post2010.csv') # detailed
 
 timemachine <- read_csv("time-machine-NLP/TimeMachine.csv")
+df_sentiment <- read_csv("time-machine-NLP/neighborhood_sentiment_scores.csv")
 
 # ------ edit variables
 
@@ -115,11 +117,11 @@ timemachine = timemachine %>%
   mutate(clean_text = stripWhitespace(clean_text)) %>%
   mutate(clean_text = removeWords(clean_text, stopwords("en")))
 
-
 # ------- labels
 year_lab <- "Year"
 age_lab <- "Median Age"
 permit_lab <- "Number of Permits"
+input_neighborhood <- unique(timemachine$neighborhood)
 
 unique(housing_acs$variable)
 
@@ -211,8 +213,9 @@ ui <- navbarPage("Manhattan Construction",
                               
                               selectInput("nlp_neighborhood",
                                           label = "Choose Neighborhood:",
-                                          choices = timemachine$neighborhood,
-                                          width = "75%")),
+                                          choices = input_neighborhood,
+                                          selected= "Chinatown",
+                                          width = "50%")),
                             fluidRow(sliderInput( inputId = "nlp_year",
                                                   label="Choose a Year",
                                                   value=2019, min=2010, max=2021),
@@ -220,13 +223,16 @@ ui <- navbarPage("Manhattan Construction",
                                                  "Maximum Number of Words:",
                                                  min = 50,  max = 300,  value = 100)),
                             fluidRow(
-                              plotOutput("wordcloud")),
+                              column(3,p("Chosen Year"),offset=4),
+                              plotOutput("wordcloud"),
+                              column(3, p("2010"), offset=4),
                             fluidRow(
                               plotlyOutput("wiki_edits_through_time")),
                             fluidRow(
+                              column(3),
                               plotOutput("sentiment_score"))
                             )
-                          )
+                          ))
 )
 
 ## -------------------- server
@@ -438,7 +444,7 @@ server <- function(input, output) {
     
     ggplotly(
       ggplot(df, aes(year, total, color=neighborhood)) +
-      geom_line(size=1.5)+
+      geom_line(size=1)+
       gghighlight(neighborhood == input$nlp_neighborhood)+
       scale_color_manual(values=dark2) + 
       labs(x = "Year", y="Total Number of Wikipedia Page Revisions",
@@ -447,8 +453,17 @@ server <- function(input, output) {
     )
   })
   
-  output$sentiment_socre <- renderPlot({
+  output$sentiment_score <- renderPlot({
     
+    df_sentiment = df_sentiment %>%
+      filter(neighborhood == input$nlp_neighborhood)
+    
+    ggplot(df_sentiment, aes(year, score, color=neighborhood)) +
+      geom_line(size=1) + theme_minimal() +
+      gghighlight(neighborhood == input$nlp_neighborhood)+
+      scale_color_manual(values=dark2) + 
+      labs(x = "Year", y="Positive/Negative Sentiment Score",
+           title="Neighborhood Sentiment Through Time")
   })
 }
 
