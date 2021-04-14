@@ -1,0 +1,292 @@
+---
+title: "Construction Data"
+author: "Melissa Feeney"
+date: "4/10/2021"
+always_allow_html: yes
+output: 
+  html_document:
+    keep_md: true
+---
+
+
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+knitr::opts_chunk$set(echo = TRUE,
+                      fig.path="images/",
+                      cache.path="cache/",
+                      cache=FALSE,
+                      echo=TRUE,
+                      message=FALSE,
+                      warning=FALSE) 
+library(knitr)
+
+options(repos="https://cran.rstudio.com" )
+```
+
+
+```{r, warning = FALSE, message = FALSE, eval = TRUE, fig.height = 8, fig.width = 10}
+# Load required packages
+
+library(readxl)
+library(dplyr)
+library(httr)
+library(ggplot2)
+library(tidyverse)
+library(magrittr)
+library(DT)
+library(stringr)
+library(rgdal)
+library(tmap)
+library(tmaptools)
+library(rgeos)
+library(RColorBrewer)
+library(sp)
+library(usethis)
+library(devtools)
+#devtools::install_github("rstudio/leaflet")
+library(leaflet)
+library(htmlwidgets)
+library(stringr)
+options(dplyr.summarise.inform = F)
+options(rgdal_show_exportToProj4_warnings=none)
+require(scales)
+# install.packages("ggmap")
+library(ggmap)
+library(htmltools)
+```
+
+```{r, warning = FALSE, message = FALSE, eval = TRUE, fig.height = 8, fig.width = 10}
+
+#census_block <- read.csv('HousingDB_by_CensusBlock.csv') # no
+#census_tract <- read.csv('HousingDB_by_CensusTract.csv') # no
+#city_council <- read.csv('HousingDB_by_CityCouncilDistrict.csv') # no
+#com_district <- read.csv('HousingDB_by_CommunityDistrict.csv') # no
+#nta <- read.csv('HousingDB_by_NTA.csv') # no
+pre_puma <- read.csv('/Users/Melissa/Desktop/HousingDB_by_PUMA.csv') #by puma
+pre_post2010 <- read.csv('/Users/Melissa/Desktop/HousingDB_post2010.csv') # detailed
+
+#### Data Notes from Data Dictionary
+# Job Types = Mapped from dob_jobapplications field jobtype as follows:
+# A1 to Alteration
+# DM to Demolition
+# NB to New Building
+# Administrative records are removed based on this field in combination with job_description.
+
+# ResidFlaf = This field is used to identify jobs in buildings containing residential uses. A value of "residential" indicates that the job affects residential units in some way through new construction, alteration, or demolition. Only those jobs with a value of "residential" are included in the housing database. Manual research was conducted at DCP to help ensure that all work on buildings with residences receive this flag, though some records may remain misclassified.
+
+# NonresidFlag = This field is used to identify jobs in buildings containing non-residential uses. A value of "non-residential" indicates that the job affects some use type beyond residential, including commercial, industrial, or community facility uses. Mixed-use buildings will have values in both the Resid_Flag and Nonresid_Flag, since they contain both residential and nonresidential uses, but having flags in both of those columns does not necessarily mean that it is a mixed-use development since the flags do not distinguish between the initial and proposed uses in the building.
+
+# Occ_Init = Description of the existing occupancy type at the time of the job application. This indicates what a site was used for before the proposed job. It is a more descriptive recode of the occupancy code that the applicant submitted to DOB as the initial occupancy type of the building. Note that the applicant may only choose one occupancy code, even in a building containing multiple uses, so this code is only able to describe one of many possible uses.
+
+# Occ_Prop = Description of the proposed occupancy type at the time of the job application. This indicates what a site will be used for after the proposed job is complete. It is a more descriptive recode of the occupancy code that the applicant submitted to DOB as the proposed occupancy type of the building. Note that the applicant may only choose one occupancy code, even in a building containing multiple uses, so this code is only able to describe one of many possible uses.
+```
+
+
+```{r, warning = FALSE, message = FALSE, eval = TRUE, fig.height = 8, fig.width = 10}
+# Construction types
+# Add puma shapefiles?
+# Get data into dataframe
+
+puma <- pre_puma %>% select(boro, puma2010, pumaname10)
+
+# Remove Demolition projects from dataset
+post2010 <- pre_post2010 %>% 
+            select(Job_Number, Job_Type, ResidFlag, NonresFlag, Job_Status, PermitYear, Boro, 
+                   AddressNum, AddressSt, Occ_Init, Occ_Prop, Job_Desc, 
+                   Ownership, NTAName10, PUMA2010, Latitude, Longitude) %>%
+              filter(!is.na(PermitYear)) %>%
+              filter(!is.na(Occ_Init)) %>%
+              filter(!is.na(Occ_Prop)) %>%
+              filter(Job_Type != 'Demolition') %>%
+              left_join(puma, by = c('PUMA2010' = 'puma2010'))
+
+# Create complete address field
+post2010$Complete_Address <- paste(post2010$AddressNum, post2010$AddressSt)
+
+head(post2010)
+
+##############
+```
+```{r}
+# Create a column for transformation type
+post2010$from <- sapply(strsplit(post2010$Occ_Init, ':'), head, 1)
+post2010$to <-  sapply(strsplit(post2010$Occ_Prop, ':'), head, 1)
+
+# Collapse those categories with (###) into single types
+post2010$from <- gsub("\\s*\\([^\\)]+\\)","", as.character(post2010$from))
+post2010$to <- gsub("\\s*\\([^\\)]+\\)","", as.character(post2010$to))
+
+# Remove the collapsed Unknown and Miscellaneous types
+post2010 <- post2010 %>%
+            filter(from != 'Unknown' & from != 'Miscellaneous') %>%
+            filter(to != 'Unknown' & to != 'Miscellaneous') 
+
+# Verify that this worked
+#unique(post2010$from)
+#unique(post2010$to) 
+
+# Remove one occurrence- cannot tell why from is blank in this row- remove by index
+post2010 <- post2010[-9133,]
+
+
+# Create transformation type column, note if there is a change in occupancy type, otherwise enter "no change"
+for (i in 1:nrow(post2010)){
+  if (post2010$from[i] != post2010$to[i]){
+    post2010$transformation_type[i] <- paste(post2010$from[i], 'to', post2010$to[i])
+  } else {
+        post2010$transformation_type[i] <- 'No Occupancy Change'
+    }
+  }
+
+
+# Count the transformation types- can add to pop-up
+# There are 33 different transformation types- probably not a good idea to make a map with different color dots for each...maybe bar plot?
+post2010 %>% count(transformation_type)
+
+```
+
+
+```{r}
+### Additional EDA
+# There are only 3404 Landmarks and there are 53506 non-Landmarks- probably not worth including
+#post2010 %>% count(Landmark)
+
+
+# Limit to just Manhattan
+manhattan <- post2010 %>% filter(boro == 'Manhattan') 
+
+# Manhattan New Buildings
+manhattan_nb <- manhattan %>% filter(Job_Type == 'New Building')
+
+# Manhattan Alterations
+manhattan_a <- manhattan %>% filter(Job_Type == 'Alteration')
+
+```
+
+
+
+```{r, warning = FALSE, message = FALSE, eval = TRUE, fig.height = 8, fig.width = 10}
+# New Buildings
+
+# Prep Pop-up details
+popup_content1 <- paste('Project Address:', manhattan_nb$Complete_Address, '<br/>',
+                       'Job Status:',manhattan_nb$Job_Status,'<br/>',
+                       'Transformation Type:',manhattan_nb$transformation_type, '<br>',
+                       'Building Ownership:',manhattan_nb$Ownership,'<br/>',
+                       'PUMA:',manhattan_nb$PUMA2010,'<br/>')
+                      
+# Map Title
+map_title1 <- tags$p(tags$style('p {color: black; font-size: 20px}'),
+                    tags$b('Construction Across NYC\n New Buildings'))
+
+
+# Color Palette 1 for the Map: Job Permit Year
+pal1 = colorFactor('Paired', domain = manhattan_nb$PermitYear) 
+color_PermitYear = pal1(manhattan_nb$PermitYear)
+
+
+# Add ability to check the permit year and job type
+manhattannb_map <- leaflet(manhattan_nb) %>%
+                   addTiles() %>%
+                   addProviderTiles(providers$Wikimedia) %>% 
+  
+                  # Add Permit Year Data
+                   addCircleMarkers(color = color_PermitYear, 
+                              popup = popup_content1,
+                              group = 'Toggle: Project Permit Year',
+                              clusterOptions = markerClusterOptions()) %>%
+                   addLegend(pal = pal1, values = ~manhattan_nb$PermitYear, title = 'Project Permit Year', position = 'bottomright') %>%
+
+                  # Layers to add toggle ability
+                   addLayersControl(baseGroups = c('Toggle: Project Permit Year'),
+                                  options = layersControlOptions(collapsed = FALSE), position = 'bottomright') %>%
+  
+                    # Add map title
+                   addControl(map_title1, position = 'topright')
+
+manhattannb_map
+```
+
+
+
+```{r}
+# Alterations
+
+# Prep Pop-up details
+popup_content2 <- paste('Project Address:', manhattan_a$Complete_Address, '<br/>',
+                       'Job Status:',manhattan_a$Job_Status,'<br/>',
+                       'Transformation Type:',manhattan_a$transformation_type, '<br>',
+                       'Building Ownership:',manhattan_a$Ownership,'<br/>',
+                       'PUMA:',manhattan_a$PUMA2010,'<br/>')
+                      
+# Map Title
+map_title2 <- tags$p(tags$style('p {color: black; font-size: 20px}'),
+                    tags$b('Construction Across NYC\n Building Alterations'))
+
+
+# Color Palette 2 for the Map: Job Permit Year
+pal2 = colorFactor('Paired', domain = manhattan_a$PermitYear) 
+color_PermitYear = pal2(manhattan_a$PermitYear)
+
+
+# Add ability to check the permit year and job type
+manhattana_map <- leaflet(manhattan_a) %>%
+                   addTiles() %>%
+                   addProviderTiles(providers$Wikimedia) %>% 
+  
+                  # Add Permit Year Data
+                   addCircleMarkers(color = color_PermitYear, 
+                              popup = popup_content2,
+                              group = 'Toggle: Project Permit Year',
+                              clusterOptions = markerClusterOptions()) %>%
+                   addLegend(pal = pal2, values = ~manhattan_a$PermitYear, title = 'Project Permit Year', position = 'bottomright') %>%
+
+                  # Layers to add toggle ability
+                   addLayersControl(baseGroups = c('Toggle: Project Permit Year'),
+                                  options = layersControlOptions(collapsed = FALSE), position = 'bottomright') %>%
+  
+                    # Add map title
+                   addControl(map_title2, position = 'topright')
+
+manhattana_map
+
+```
+
+
+```{r}
+library(htmlwidgets)
+saveWidget(manhattannb_map, file = 'manhattannb_map.html')
+saveWidget(manhattana_map, file = 'manhattana_map.html')
+
+```
+
+
+```{r}
+##### WIP this looks bad right now #####
+
+library(treemapify)
+tree_map_data <- post2010 %>% 
+  filter(boro == 'Manhattan') %>%
+  select(pumaname10, Job_Type) %>%
+  group_by(pumaname10) %>%
+  count(Job_Type) %>%
+colnames(tree_map_data)[3] <- 'project_count'  
+
+ggplot(tree_map_data, aes(area = project_count, fill = pumaname10, subgroup = Job_Type, label = Job_Type)) +
+  geom_treemap() +
+  geom_treemap_subgroup_border(colour = "black") +
+  geom_treemap_subgroup_text(fontface = "bold", colour = "#f0f0f0", alpha = 0.7, place = "bottomleft") +
+  geom_treemap_text(colour = "white", place = "centre", reflow = TRUE) +
+  scale_fill_brewer(palette = "Dark2") +
+  labs(title = "",
+       subtitle = "Country GDP by continent, 2007",
+       caption = "Source: Gapminder.org  |  @traffordDataLab",
+       x = NULL, 
+       y = NULL, 
+       fill = NULL) +
+  theme_minimal() +
+  theme(legend.position = "none")
+
+```
