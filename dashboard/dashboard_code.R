@@ -107,17 +107,9 @@ unique(housing_acs$variable)
 dark2 <- colorRampPalette(brewer.pal(8, "Dark2"))(10)
 
 # ------ wip plots
-res_permit_count %>% # breaks by proposed use
-  filter(year %in% c(2009:2019)) %>%
-  ggplot(aes(year, permit_count, fill = prop_use)) +
-  geom_bar(stat = "identity") +
-  scale_fill_brewer(palette = "Dark2") +
-  scale_x_continuous(breaks= c(2009:2019)) +
-  theme_minimal() +
-  facet_wrap(~puma_name)
 
 # run some regression models to see if any relationship
-# plm(permit_count ~ estimate, index = c("puma_name", "year"), model = "fd", data = permit_rental_price[permit_rental_price$permit_type == "New Building",])
+#plm(permit_count ~ estimate, index = c("puma_name", "year"), model = "fd", data = permit_rental_price[permit_rental_price$permit_type == "New Building",])
 
 
 # --------------------- dashboard w/ sidebar panel ----------------------
@@ -138,8 +130,8 @@ ui <- navbarPage("Manhattan Construction",
                      p("Explain background on project....why we chose to focus on Manhattan..."),
                      
                      fluidRow(
-                       box(plotOutput("homeprice_vs_permit", height = "40vh"), height = "40vh"),
-                       box(plotOutput("rent_vs_permit", height = "40vh"), height = "40vh")
+                       box(plotOutput("homeprice_vs_permit", height = "45vh"), height = "45vh"),
+                       box(plotOutput("rent_vs_permit", height = "45vh"), height = "45vh")
                      )
                    )
                  ),
@@ -147,17 +139,17 @@ ui <- navbarPage("Manhattan Construction",
                  tabPanel("Construction",
                           mainPanel(
                             fluidRow(
-                              leafletOutput("p_const_new_map"),
+                              leafletOutput("const_new_map"),
                               
                               br(),
                               br(),
                               
-                              leafletOutput("p_const_alt_map")
+                              leafletOutput("const_alt_map")
                               )
                             )
                           ),
 
-                 tabPanel("Neighborhood Demographics",
+                 tabPanel("Neighborhood Attributes",
                             mainPanel(
                               fluidRow(
                                   h2("Explore Construction Data with Neighborhood Attributes"),
@@ -166,16 +158,17 @@ ui <- navbarPage("Manhattan Construction",
                                   selectInput("puma",
                                               label = "Choose Neighborhood:",
                                               choices = input_puma,
-                                              selected = "Manhattan",
-                                              width = "75%")),
+                                              selected = "Upper West Side & West Side",
+                                              width = "50%")),
 
                               fluidRow(
-                                box(plotOutput("res_new_permit")),
-                                box(plotOutput("res_alt_permit"))),
+                                box(plotlyOutput("res_new_permit")),
+                                box(plotlyOutput("res_alt_permit"))),
+                              br(), br(),
                               
                               fluidRow(
-                                box(plotOutput("rental_price")),
-                                box(plotOutput("home_value"))),
+                                box(plotlyOutput("rental_price")),
+                                box(plotlyOutput("home_value"))),
                               
                               fluidRow(
                                 box(plotOutput("med_age")),
@@ -211,11 +204,9 @@ server <- function(input, output) {
       labs(x = "NYC Number of Permits (Log Transformed)", y = "Median Gross Rent (per Month)",
            title = "Median Rent vs Residential Construction Permits") +
       theme(legend.position = "bottom")
-    
-    
   })
   
-  output$res_new_permit <- renderPlot({
+  output$res_new_permit <- renderPlotly({
     data <- res_permit_count %>% 
       filter(permit_type == "New Building",
              borough == "Manhattan",
@@ -223,83 +214,100 @@ server <- function(input, output) {
       group_by(puma_name, year) %>%
       summarise(permit_count = sum(permit_count))
     
-    ggplot(data, aes(year, permit_count, fill = puma_name)) +
-      geom_bar(stat = "identity") +
-      gghighlight(puma_name == input$puma) +
-      scale_fill_manual(values = dark2) +
+    p <- ggplot(data, aes(year, permit_count)) + 
+      geom_point(color = "gray",
+                 size = 2, 
+                 alpha = 0.5) +
+      geom_point(data = subset(x = data, puma_name == input$puma), 
+                 color = "#1B9E77",
+                 size = 3) +
       scale_x_continuous(breaks= c(2009:2019)) +
-      scale_y_continuous(limits = c(0, 305)) +
       theme_minimal() +
       labs(x = year_lab, y = permit_lab,
-           title = "Number of Residential New Building Permits")
+           title = "Residential New Building Permits")
+    
+    ggplotly(p)
   })
   
-  output$res_alt_permit <- renderPlot({
-    data <- res_permit_count %>% 
+  output$res_alt_permit <- renderPlotly({
+    data <- res_permit_count %>%
       filter(permit_type == "Alteration",
              borough == "Manhattan",
              year >= 2009 & year < 2020) %>%
       group_by(puma_name, year) %>%
       summarise(permit_count = sum(permit_count))
-    
-    ggplot(data, aes(year, permit_count, fill = puma_name)) +
-      geom_bar(stat = "identity") +
-      gghighlight(puma_name == input$puma) +
-      scale_fill_manual(values = dark2) +
+
+    p <- ggplot(data, aes(year, permit_count)) +
+      geom_point(color = "gray", 
+                 size = 2, 
+                 alpha = 0.5) +
+      geom_point(data = subset(x = data, puma_name == input$puma), 
+                 color = "#1B9E77",
+                 size = 3) +
       scale_x_continuous(breaks= c(2009:2019)) +
-      scale_y_continuous(limits = c(0, 305)) +
       theme_minimal() +
       labs(x = year_lab, y = permit_lab,
-           title = "Number of Residential Alteration Permits")
+           title = "Residential Alteration Permits")
+    
+    ggplotly(p)
   })
   
-  output$rental_price <- renderPlot({
-    data <-permit_rental_price %>%
+  output$rental_price <- renderPlotly({
+    data <- permit_rental_price %>%
       filter(permit_type == "New Building",
              borough == "Manhattan",
              year >= 2009)
 
-    ggplot(data, aes(x = year, y = estimate, color = puma_name)) +
-      geom_line(size = 1.5) +
-      gghighlight(puma_name == input$puma) +
+    p <- ggplot(data, aes(x = year, y = estimate, color = puma_name)) + 
+      geom_line(aes(x = year, y = estimate, color = puma_name), alpha = 0.3) +
+      geom_line(data = subset(x = data, puma_name == input$puma), 
+                 color = "#1B9E77",
+                 size = 1.5) +      
       scale_x_continuous(breaks= c(2009:2019)) +
       scale_y_continuous(labels = scales::dollar) +
-      scale_color_manual(values = dark2) +
       theme_minimal() +
       labs(x = year_lab, y = "Median Gross Rent (Month)",
-           title = "Median Rental Prices") 
-  })
+           title = "Median Rental Prices") +
+      theme(legend.position = "none")
     
-  output$home_value <- renderPlot({
+    ggplotly(p)
+  })
+  
+  output$home_value <- renderPlotly({
     data <- permit_home_value %>%
-      filter(permit_type == "New Building", 
+      filter(permit_type == "New Building",
              borough == "Manhattan",
              year >= 2009)
 
-    ggplot(data, aes(x = year, y = estimate, color = puma_name)) +
-      geom_line(size = 1.5) +
-      gghighlight(puma_name == input$puma) +
+    p <- ggplot(data, aes(label = puma_name, label2 = estimate)) + # ----------------------------------- figure out textbox info
+      geom_line(aes(x = year, y = estimate, color = puma_name), alpha = 0.3) +
+      geom_line(data = subset(x = data, puma_name == input$puma),
+                aes(x = year, y = estimate),
+                color = "#1B9E77",
+                size = 1.5) +     
       scale_x_continuous(breaks= c(2009:2019)) +
       scale_y_continuous(labels = scales::dollar) +
-      scale_color_manual(values = dark2) +
       theme_minimal() +
       labs(x = year_lab, y = "Median Home Value",
-           title = "Median Home Value") 
+           title = "Median Home Value") +
+      theme(legend.position = "none")
+    
+    ggplotly(p)
   })
   
   
-  output$med_age <- renderPlot({
-    ggplot(med_age, aes(year, estimate, color = puma_name)) +
-      geom_line(size = 1.5) +
-      gghighlight(puma_name == input$puma) +
-      scale_color_manual(values = dark2) +
-      scale_x_continuous(breaks= c(2009:2019)) +
-      theme_minimal() +
-      labs(x = year_lab, y = age_lab,
-           title = "Median Age")
-  })
+  # output$med_age <- renderPlot({
+  #   ggplot(med_age, aes(year, estimate, color = puma_name)) +
+  #     geom_line(size = 1.5) +
+  #     gghighlight(puma_name == input$puma) +
+  #     scale_color_manual(values = dark2) +
+  #     scale_x_continuous(breaks= c(2009:2019)) +
+  #     theme_minimal() +
+  #     labs(x = year_lab, y = age_lab,
+  #          title = "Median Age")
+  # })
   
-  output$p_const_new_map <- renderLeaflet({
+  output$const_new_map <- renderLeaflet({
     # Total Map
     # Prep Pop-up details
     popup_content <- paste('Job Number:',post2010$Job_Number,'<br/>',
@@ -309,30 +317,30 @@ server <- function(input, output) {
                            'Landmark Status:',post2010$Landmark,'<br/>',
                            'Building Ownership:',post2010$Ownership,'<br/>',
                            'PUMA:',post2010$PUMA2010,'<br/>')
-    
+
     # Map Title
     map_title <- tags$p(tags$style('p {color: black; font-size: 20px}'),
                         tags$b('New Building'))
-    
+
     post2010 <- post2010 %>% filter(CompltYear == 2020,
                                     Job_Type == "New Building")
-    
+
     post2010_map <- leaflet(post2010) %>%
       addTiles() %>%
-      addProviderTiles(providers$Wikimedia) %>% 
-      
+      addProviderTiles(providers$Wikimedia) %>%
+
       # Add Job Type Data
       addCircleMarkers(popup = popup_content,
                        clusterOptions = markerClusterOptions()) %>%
-      
+
       # Add map title
       addControl(map_title, position = 'topright')
-    
+
     post2010_map
-    
+
   })
-  
-  output$p_const_alt_map <- renderLeaflet({
+
+  output$const_alt_map <- renderLeaflet({
     # Total Map
     # Prep Pop-up details
     popup_content <- paste('Job Number:',post2010$Job_Number,'<br/>',
@@ -342,26 +350,24 @@ server <- function(input, output) {
                            'Landmark Status:',post2010$Landmark,'<br/>',
                            'Building Ownership:',post2010$Ownership,'<br/>',
                            'PUMA:',post2010$PUMA2010,'<br/>')
-    
+
     # Map Title
     map_title <- tags$p(tags$style('p {color: black; font-size: 20px}'),
                         tags$b('Alteration'))
-    
+
     post2010 <- post2010 %>% filter(CompltYear == 2020,
                                     Job_Type == "Alteration")
-    
+
     post2010_map <- leaflet(post2010) %>%
       addTiles() %>%
-      addProviderTiles(providers$Wikimedia) %>% 
-      
+      addProviderTiles(providers$Wikimedia) %>%
       addCircleMarkers(popup = popup_content,
                        clusterOptions = markerClusterOptions()) %>%
-      
       # Add map title
       addControl(map_title, position = 'topright')
-    
+
     post2010_map
-    
+
   })
 }
 
