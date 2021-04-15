@@ -18,7 +18,7 @@ library(wordcloud)
 library(plotly)
 library(quanteda)
 
-# setwd("C:/Users/natal/Desktop/QMSS/Spring 2021/Data_Visualization/project/Group_J_NYCRealEstate/")   
+setwd("C:/Users/natal/Desktop/QMSS/Spring 2021/Data_Visualization/project/Group_J_NYCRealEstate/")
 
 # ------ load data
 
