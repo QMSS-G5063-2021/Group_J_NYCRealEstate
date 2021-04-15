@@ -22,7 +22,7 @@ setwd("C:/Users/natal/Desktop/QMSS/Spring 2021/Data_Visualization/project/Group_
 
 # ------ load data
 
-acs1 <- read_csv("acs_demographics/acs_1yr_2009_2019.csv") %>% rename(puma_code = PUMA)
+#acs1 <- read_csv("acs_demographics/acs_1yr_2009_2019.csv") %>% rename(puma_code = PUMA)
 acs5 <- read_csv("acs_demographics/acs_5yr_2014_and_2019.csv") %>% filter(borough == "Manhattan") %>% rename(puma_code = PUMA)
 
 construction <- read_csv("construction_data/HousingDB_post2010.csv") %>% 
