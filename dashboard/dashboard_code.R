@@ -100,12 +100,56 @@ permit_home_value <- housing_acs %>%
   select(puma_code, year, variable, estimate) %>%
   left_join(res_permit_count, by = c("puma_code", "year"))
 
+########### melissa
 puma <- pre_puma %>% select(boro, puma2010, pumaname10)
-post2010 <- pre_post2010 %>%
-  select(Job_Number, Job_Type, ResidFlag, NonresFlag, Job_Status, CompltYear, Boro, 
-         AddressSt, Occ_Init, Occ_Prop, Job_Desc, DateComplt, Landmark, Ownership, 
-         NTAName10, PUMA2010, Latitude, Longitude) %>% 
+
+# Remove Demolition projects from dataset
+post2010 <- pre_post2010 %>% 
+  select(Job_Number, Job_Type, ResidFlag, NonresFlag, Job_Status, PermitYear, Boro, 
+         AddressNum, AddressSt, Occ_Init, Occ_Prop, Job_Desc, 
+         Ownership, NTAName10, PUMA2010, Latitude, Longitude) %>%
+  filter(!is.na(PermitYear)) %>%
+  filter(!is.na(Occ_Init)) %>%
+  filter(!is.na(Occ_Prop)) %>%
+  filter(Job_Type != 'Demolition') %>%
   left_join(puma, by = c('PUMA2010' = 'puma2010'))
+# Create complete address field
+post2010$Complete_Address <- paste(post2010$AddressNum, post2010$AddressSt)
+
+# Create a column for transformation type
+post2010$from <- sapply(strsplit(post2010$Occ_Init, ':'), head, 1)
+post2010$to <-  sapply(strsplit(post2010$Occ_Prop, ':'), head, 1)
+
+# Collapse those categories with (###) into single types
+post2010$from <- gsub("\\s*\\([^\\)]+\\)","", as.character(post2010$from))
+post2010$to <- gsub("\\s*\\([^\\)]+\\)","", as.character(post2010$to))
+
+# Remove the collapsed Unknown and Miscellaneous types
+post2010 <- post2010 %>%
+  filter(from != 'Unknown' & from != 'Miscellaneous') %>%
+  filter(to != 'Unknown' & to != 'Miscellaneous') 
+
+# Remove one occurrence by index 
+post2010 <- post2010[-9133,]
+
+# Create transformation type column, note if there is a change in occupancy type, otherwise enter "no change"
+for (i in 1:nrow(post2010)){
+  if (post2010$from[i] != post2010$to[i]){
+    post2010$transformation_type[i] <- paste(post2010$from[i], 'to', post2010$to[i])
+  } else {
+    post2010$transformation_type[i] <- 'No Occupancy Change'
+  }
+}
+
+# Limit to just Manhattan
+manhattan <- post2010 %>% filter(boro == 'Manhattan') 
+
+# Manhattan New Buildings
+manhattan_nb <- manhattan %>% filter(Job_Type == 'New Building')
+
+# Manhattan Alterations
+manhattan_a <- manhattan %>% filter(Job_Type == 'Alteration')
+####################
 
 # - clean TimeMachine.csv data for text analysis
 timemachine = timemachine %>%
@@ -356,66 +400,88 @@ server <- function(input, output) {
   #          title = "Median Age")
   # })
   
+  ######### melissa
   output$const_new_map <- renderLeaflet({
-    # Total Map
+    # New Construction Map
     # Prep Pop-up details
-    popup_content <- paste('Job Number:',post2010$Job_Number,'<br/>',
-                           'Job Status:',post2010$Job_Status,'<br/>',
-                           'Initial Occupier:',post2010$Occ_Init,'<br/>',
-                           'Proposed Occupier:',post2010$Occ_Prop,'<br/>',
-                           'Landmark Status:',post2010$Landmark,'<br/>',
-                           'Building Ownership:',post2010$Ownership,'<br/>',
-                           'PUMA:',post2010$PUMA2010,'<br/>')
-
+    popup_content1 <- paste('Project Address:', manhattan_nb$Complete_Address, '<br/>',
+                            'Job Status:',manhattan_nb$Job_Status,'<br/>',
+                            'Transformation Type:',manhattan_nb$transformation_type, '<br>',
+                            'Building Ownership:',manhattan_nb$Ownership,'<br/>',
+                            'PUMA:',manhattan_nb$PUMA2010,'<br/>')
     # Map Title
-    map_title <- tags$p(tags$style('p {color: black; font-size: 20px}'),
-                        tags$b('New Building'))
+    map_title1 <- tags$p(tags$style('p {color: black; font-size: 20px}'),
+                         tags$b('Construction Across NYC\n New Buildings'))
 
-    post2010 <- post2010 %>% filter(CompltYear == 2020,
-                                    Job_Type == "New Building")
+    # Color Palette for the Map: Job Permit Year
+    pal1 = colorFactor('Paired', domain = manhattan_nb$PermitYear) 
+    color_PermitYear = pal1(manhattan_nb$PermitYear)
+    
+    #post2010 <- post2010 %>% filter(CompltYear == 2020,
+    #                                Job_Type == "New Building")
 
-    post2010_map <- leaflet(post2010) %>%
+    manhattan_nb_map <- leaflet(manhattan_nb) %>%
       addTiles() %>%
-      addProviderTiles(providers$Wikimedia) %>%
-
-      # Add Job Type Data
-      addCircleMarkers(popup = popup_content,
+      addProviderTiles(providers$Wikimedia) %>% 
+      
+      # Add Permit Year Data
+      addCircleMarkers(color = color_PermitYear, 
+                       popup = popup_content1,
+                       group = 'Toggle: Project Permit Year',
                        clusterOptions = markerClusterOptions()) %>%
-
+      addLegend(pal = pal1, values = ~manhattan_nb$PermitYear, title = 'Project Permit Year', position = 'bottomright') %>%
+      
+      # Layers to add toggle ability
+      addLayersControl(baseGroups = c('Toggle: Project Permit Year'),
+                       options = layersControlOptions(collapsed = FALSE), position = 'bottomright') %>%
+      
       # Add map title
-      addControl(map_title, position = 'topright')
-
-    post2010_map
+      addControl(map_title1, position = 'topright')
+    
+    manhattan_nb_map
 
   })
 
   output$const_alt_map <- renderLeaflet({
-    # Total Map
+    # Alteration Map
     # Prep Pop-up details
-    popup_content <- paste('Job Number:',post2010$Job_Number,'<br/>',
-                           'Job Status:',post2010$Job_Status,'<br/>',
-                           'Initial Occupier:',post2010$Occ_Init,'<br/>',
-                           'Proposed Occupier:',post2010$Occ_Prop,'<br/>',
-                           'Landmark Status:',post2010$Landmark,'<br/>',
-                           'Building Ownership:',post2010$Ownership,'<br/>',
-                           'PUMA:',post2010$PUMA2010,'<br/>')
+    popup_content2 <- paste('Project Address:', manhattan_a$Complete_Address, '<br/>',
+                            'Job Status:',manhattan_a$Job_Status,'<br/>',
+                            'Transformation Type:',manhattan_a$transformation_type, '<br>',
+                            'Building Ownership:',manhattan_a$Ownership,'<br/>',
+                            'PUMA:',manhattan_a$PUMA2010,'<br/>')
 
     # Map Title
-    map_title <- tags$p(tags$style('p {color: black; font-size: 20px}'),
-                        tags$b('Alteration'))
+    map_title2 <- tags$p(tags$style('p {color: black; font-size: 20px}'),
+                         tags$b('Construction Across NYC\n Building Alterations'))
+    
 
-    post2010 <- post2010 %>% filter(CompltYear == 2020,
-                                    Job_Type == "Alteration")
+    #post2010 <- post2010 %>% filter(CompltYear == 2020,
+    #                                Job_Type == "Alteration")
 
-    post2010_map <- leaflet(post2010) %>%
+    # Color Palette for the Map: Job Permit Year
+    pal2 = colorFactor('Paired', domain = manhattan_a$PermitYear) 
+    color_PermitYear = pal2(manhattan_a$PermitYear)
+    
+    manhattan_alt_map <- leaflet(manhattan_a) %>%
       addTiles() %>%
-      addProviderTiles(providers$Wikimedia) %>%
-      addCircleMarkers(popup = popup_content,
+      addProviderTiles(providers$Wikimedia) %>% 
+      
+      # Add Permit Year Data
+      addCircleMarkers(color = color_PermitYear, 
+                       popup = popup_content2,
+                       group = 'Toggle: Project Permit Year',
                        clusterOptions = markerClusterOptions()) %>%
+      addLegend(pal = pal2, values = ~manhattan_a$PermitYear, title = 'Project Permit Year', position = 'bottomright') %>%
+      
+      # Layers to add toggle ability
+      addLayersControl(baseGroups = c('Toggle: Project Permit Year'),
+                       options = layersControlOptions(collapsed = FALSE), position = 'bottomright') %>%
+      
       # Add map title
-      addControl(map_title, position = 'topright')
-
-    post2010_map
+      addControl(map_title2, position = 'topright')
+    
+    manhattan_alt_map
 
   })
   
