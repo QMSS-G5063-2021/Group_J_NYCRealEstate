@@ -260,6 +260,122 @@ input_neighborhood <- unique(timemachine$neighborhood)
 
 unique(housing_acs$variable)
 
+
+## Data manipulation for demographics
+
+
+
+# ------ wrangle data
+med_age <- acs1_manhattan %>%
+  filter(variable == "med_age") %>%
+  pivot_longer(names_to = "year", values_to = "estimate", cols = c(est_2009:est_2019)) %>%
+  mutate(year = as.numeric(gsub("est_", "", year))) %>%
+  select(-GEOID)
+
+#View(med_age)
+mean_group <- aggregate(x = med_age$estimate,
+                        by=list(puma_name = med_age$puma_name, year = med_age$year),
+                        FUN=mean)
+#View(mean_group)
+names(mean_group)[3] <- "median_age"
+## 
+
+# population 
+
+population <- acs1_manhattan %>%
+  filter(variable == "population") %>%
+  pivot_longer(names_to = "year", values_to = "estimate", cols = c(est_2009:est_2019)) %>%
+  mutate(year = as.numeric(gsub("est_", "", year))) %>%
+  select(-GEOID)
+
+#View(med_age)
+pop_group <- aggregate(x = population$estimate,
+                        by=list(puma_name = population$puma_name, year = population$year),
+                        FUN=mean)
+
+names(pop_group)[3] <- "median_population"
+
+
+# Income level 
+
+income <- acs1_manhattan %>%
+  filter(variable == "hhincome") %>%
+  pivot_longer(names_to = "year", values_to = "estimate", cols = c(est_2009:est_2019)) %>%
+  mutate(year = as.numeric(gsub("est_", "", year))) %>%
+  select(-GEOID)
+
+
+income_group <- aggregate(x = income$estimate,
+                       by=list(puma_name = income$puma_name, year = income$year),
+                       FUN=mean)
+
+names(income_group)[3] <- "median_income"
+
+# gender 
+
+#View(acs1_manhattan)
+gender_female <- acs1_manhattan %>%
+  filter(variable == "female") %>%
+  pivot_longer(names_to = "year", values_to = "estimate", cols = c(est_2009:est_2019)) %>%
+  mutate(year = as.numeric(gsub("est_", "", year))) %>%
+  select(-GEOID)
+
+gender_male <- acs1_manhattan %>%
+  filter(variable == "male") %>%
+  pivot_longer(names_to = "year", values_to = "estimate", cols = c(est_2009:est_2019)) %>%
+  mutate(year = as.numeric(gsub("est_", "", year))) %>%
+  select(-GEOID)
+
+gender = rbind(gender_female,gender_male)
+
+ gender_2019 <- gender %>%
+  filter (year == 2019)
+
+ library(tidyverse)
+ gender_clean <- gender_2019 %>% 
+   group_by(puma_code) %>% 
+   mutate(fraction = estimate/sum(estimate)) %>% 
+   ungroup 
+
+ gender_clean$ymax <- gender_clean$fraction
+ # Compute the bottom of each rectangle
+ gender_clean$ymin <- c(0, head(gender_clean$ymax, n=-1))
+ # Compute label position
+ gender_clean$labelPosition <- (gender_clean$ymax + gender_clean$ymin) / 2
+ 
+ # Compute a good label
+ gender_clean$percentage <- label_percent()(gender_clean$fraction)
+ gender_clean$label <- paste0(gender_clean$variable, "\n value: ", gender_clean$percentage)
+
+ 
+ names(gender_clean)[1] <- "gender"
+ 
+ # Move situation 
+# View(acs5_manhattan)
+ 
+ move <-  acs5_manhattan %>%
+   filter(variable == "B07001_017" | variable == "B07001_033" |variable == "B07001_049"|variable == "B07001_065"|variable == "B07001_081")
+ 
+ # segmenting data 
+ 
+move_clean <- move %>% 
+   group_by(puma_code) %>% 
+   mutate(fraction = est_2019/sum(est_2019)) %>% 
+   ungroup 
+ 
+
+
+library(dplyr)
+library(car)
+move_clean <- mutate(move_clean_1, variable= recode(variable, "'B07001_017'='No move'"))
+move_clean <- mutate(move_clean, variable= recode(variable, "'B07001_033'='Same county'"))
+move_clean <- mutate(move_clean, variable= recode(variable, "'B07001_049'='Different county, same state'"))
+move_clean <- mutate(move_clean, variable= recode(variable, "'B07001_065'='Different state'"))
+move_clean <- mutate(move_clean, variable= recode(variable, "'B07001_081'='Abroad'"))
+
+names(move_clean)[2] <- "move_from"
+
+
 # ------ color 
 dark2 <- colorRampPalette(brewer.pal(8, "Dark2"))(10)
 
@@ -361,6 +477,49 @@ ui <- navbarPage("Manhattan Construction",
                                 box())
                               )
                           ),
+ ###########
+                 
+                 tabPanel("Demographics",
+                          mainPanel(
+                            fluidRow(
+                              h2("Explore Neighborhood Demographics"),
+                              p("The below graphs show the representative demographics 
+                                of 10 the neighborhood in Manhattan. These include: median
+                                age, population, median income, gender and where they moved from.
+                                The demographics painted a vivid picture of what type of people 
+                                live in and consist of each neighborhood, and how their migration
+                                pattern affects the alteration and progression of city's real estate.
+                                "),
+                              
+                            
+                              selectInput("puma",
+                                          label = "Choose Neighborhood:",
+                                          choices = input_puma,
+                                          selected = "Upper West Side & West Side",
+                                          width = "50%")),
+                            fluidRow(
+                              box(plotOutput("median_age")),
+                              box(plotOutput("population"))),
+                            br(), br(),
+                              
+                            fluidRow(
+                              column(8, align="center",
+                              box(plotOutput("income"))),
+                            br(), br(),
+                            
+                            fluidRow(
+                              box(plotOutput("gender")),
+                              box(plotOutput("move"))
+                              )
+                            ),
+                 
+                                         
+                 
+                 
+                 
+                 
+                 
+  ############           
                  
                  tabPanel("Neighborhoods in Words",
                           mainPanel(
@@ -743,6 +902,82 @@ server <- function(input, output) {
              title="Wikipedia Page Length by Year")
     )
   })
+  
+  output$median_age <- renderPlot({
+    
+      ggplot(mean_group, aes(as.factor(year), median_age, colour=puma_name)) + 
+        geom_line(aes(group = puma_name)) + 
+        gghighlight(puma_name == input$puma) +
+        ggtitle("Neighborhood Median Age Through Years") +
+        xlab("Year") + ylab("Median Age")+
+       geom_point()},height = 400, width = 300) 
+  
+  
+  output$population <- renderPlot({
+    
+    ggplot(pop_group, aes(as.factor(year), median_population, colour=puma_name)) + 
+      geom_line(aes(group = puma_name)) + 
+      gghighlight(puma_name == input$puma) +
+      ggtitle("Neighborhood Median Population Through Years") +
+      xlab("Year") + ylab("Median Population")+
+      geom_point()},height = 400, width = 320) 
+  
+  
+  output$income <- renderPlot({
+
+    ggplot(income_group, aes(x = year, y = median_income, fill = puma_name)) +
+      geom_area(color = "white", alpha = 0.4) +
+      scale_fill_brewer(palette = "Paired") +
+      scale_x_continuous(breaks= c(2009:2019)) +
+     # gghighlight(puma_name == input$puma) +
+      scale_y_continuous(expand = c(0, 0), labels = scales::dollar) +
+      labs(title = "",
+           subtitle = "Median Household Income by Neighborhood, 2009-2019",
+           caption = "Source: ACS",
+           x = NULL,
+           y = "Median Household Income ($)",
+           fill = NULL) +
+      theme(panel.grid.major.x = element_blank(),
+            legend.position = "bottom")}, height = 400, width = 580) 
+  
+  
+  output$gender <- renderPlot({
+    
+    ggplot(data = subset(x = gender_clean, puma_name == "East Harlem"), aes(x="", y=fraction, fill=gender))+
+      geom_bar(width = 1, stat = "identity") +
+      scale_fill_brewer(palette="dark2")+
+      theme_minimal()+
+      theme(legend.key.size = unit(0.3, "cm"),
+            legend.margin = margin(0.5, 10, 0.5, 10))+
+      coord_polar("y", start=0)+
+          labs(fill="gender",
+                     x=NULL,
+                     y=NULL, 
+                     title="Gender Distribution",
+                     caption="Source: ACS")}) 
+  
+  
+  output$move <- renderPlot({
+    
+    ggplot(data = subset(x = move_clean, puma_name == "East Harlem"), aes(x="", y=fraction, fill= move_from))+
+      geom_bar(width = 1, stat = "identity") +
+      theme(axis.line = element_blank() )+
+      scale_fill_brewer(palette="dark2")+
+      theme_minimal()+
+      coord_polar("y", start=0) +
+      
+      theme(legend.key.size = unit(0.3, "cm"),
+            legend.margin = margin(0.5, 10, 0.5, 10))+
+      labs(fill="move_from",
+           x=NULL,
+           y=NULL, 
+           title="Last Move From Distribution",
+           caption="Source: ACS")}) 
+  
+  
+  
+  
+  
 }
 
 shinyApp(ui, server)
