@@ -525,7 +525,8 @@ ui <- navbarPage("Manhattan Construction",
                           mainPanel(
                             fluidRow(
                               h2("How are neighborhoods described through time?"),
-                              p("The four graphs below show how a Manhattan neighborhood is described from 2010 to 2021. The word cloud comapres the words that are used to describe a neighborhood in 2010 vs. 2021. The data was collected using the way-back-machine Python API that queries historical versions of a certain webpage stored in Internet Archives."),
+                              p("The four graphs below show how a Manhattan neighborhood is described from 2010 to 2021. The word cloud comapres the words that are used to describe a neighborhood in 
+                                2010 vs. 2021. The data was collected using the way-back-machine Python API that queries historical versions of a certain webpage stored in Internet Archives."),
                               
                               p("Select the year to compare against 2010 below and the number of words to use in the comparison."),
                               selectInput("nlp_neighborhood",
@@ -962,7 +963,7 @@ server <- function(input, output) {
     ggplot(data = subset(x = move_clean, puma_name == "East Harlem"), aes(x="", y=fraction, fill= move_from))+
       geom_bar(width = 1, stat = "identity") +
       theme(axis.line = element_blank() )+
-      scale_fill_brewer(palette="dark2")+
+      scale_fill_manual(values=dark2)+
       theme_minimal()+
       coord_polar("y", start=0) +
       
