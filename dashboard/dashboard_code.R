@@ -17,12 +17,23 @@ library(ggplot2)
 library(wordcloud)
 library(plotly)
 library(quanteda)
+library(treemapify)
+library(igraph)
+library(network)
+library(ggnetwork)
+library(tidygraph)
+library(stringr)
+library(tidyr)
+library(ggraph)
+library(magrittr)
 
-setwd("C:/Users/natal/Desktop/QMSS/Spring 2021/Data_Visualization/project/Group_J_NYCRealEstate/")
+
+#setwd("C:/Users/natal/Desktop/QMSS/Spring 2021/Data_Visualization/project/Group_J_NYCRealEstate/")
+setwd('/Users/Melissa/Desktop/Data Visualization SP21/Group_J_NYCRealEstate/')
 
 # ------ load data
 
-#acs1 <- read_csv("acs_demographics/acs_1yr_2009_2019.csv") %>% rename(puma_code = PUMA)
+acs1 <- read_csv("acs_demographics/acs_1yr_2009_2019.csv") %>% rename(puma_code = PUMA)
 acs5 <- read_csv("acs_demographics/acs_5yr_2014_and_2019.csv") %>% filter(borough == "Manhattan") %>% rename(puma_code = PUMA)
 
 construction <- read_csv("construction_data/HousingDB_post2010.csv") %>% 
@@ -66,6 +77,8 @@ construction_manhattan <- construction %>% filter(borough == "Manhattan")
 input_boro <- unique(acs1$borough)
 input_puma <- puma$puma_name[order(unique(puma$puma_name), puma$puma_name)]
 
+
+
 # ------ wrangle data
 med_age <- acs1 %>%
   filter(variable == "med_age") %>%
@@ -100,7 +113,8 @@ permit_home_value <- housing_acs %>%
   select(puma_code, year, variable, estimate) %>%
   left_join(res_permit_count, by = c("puma_code", "year"))
 
-########### melissa
+
+########### melissa start
 puma <- pre_puma %>% select(boro, puma2010, pumaname10)
 
 # Remove Demolition projects from dataset
@@ -113,6 +127,7 @@ post2010 <- pre_post2010 %>%
   filter(!is.na(Occ_Prop)) %>%
   filter(Job_Type != 'Demolition') %>%
   left_join(puma, by = c('PUMA2010' = 'puma2010'))
+
 # Create complete address field
 post2010$Complete_Address <- paste(post2010$AddressNum, post2010$AddressSt)
 
@@ -143,13 +158,75 @@ for (i in 1:nrow(post2010)){
 
 # Limit to just Manhattan
 manhattan <- post2010 %>% filter(boro == 'Manhattan') 
+manhattan$PermitYear <- as.numeric(manhattan$PermitYear)
+
+#### Create a column that groups by permit year
+for (i in 1:nrow(manhattan)){
+  if (manhattan$PermitYear[i] >= 2000 && manhattan$PermitYear[i] <= 2004){
+    manhattan$permit_yr_group[i] <- '2000 - 2004'} 
+  else if (manhattan$PermitYear[i] >= 2005 && manhattan$PermitYear[i] <= 2009){
+    manhattan$permit_yr_group[i] <- '2005 - 2009'} 
+  else if (manhattan$PermitYear[i] >= 2010 && manhattan$PermitYear[i] <= 2014){
+    manhattan$permit_yr_group[i] <- '2010 - 2014'} 
+  else if (manhattan$PermitYear[i] >= 2015 && manhattan$PermitYear[i] <= 2019){
+    manhattan$permit_yr_group[i] <- '2015 - 2019'} 
+  else {
+    manhattan$permit_yr_group[i] <- '2020 - present'}
+}
 
 # Manhattan New Buildings
 manhattan_nb <- manhattan %>% filter(Job_Type == 'New Building')
 
 # Manhattan Alterations
 manhattan_a <- manhattan %>% filter(Job_Type == 'Alteration')
-####################
+
+############################# Treemap Data Wrangling
+colors <- 10
+mycolors <- colorRampPalette(brewer.pal(8, 'Dark2'))(colors)
+
+# Treemap Manhattan New Buildings
+library(treemapify)
+tree_map_newb <- manhattan_nb %>% 
+                 select(pumaname10, Job_Type) %>%
+                 group_by(pumaname10) %>%
+                 count(Job_Type) 
+
+colnames(tree_map_newb)[3] <- 'project_count'  
+tree_map_newb$Job_Type <- stringr::str_replace(tree_map_newb$Job_Type, 'New Building', 'New Buildings')
+tree_map_newb$shortened_puma <- sapply(strsplit(tree_map_newb$pumaname10, '- '), tail, 1)
+
+# Treemap Manhattan Alterations
+tree_map_alt <- manhattan_a %>% 
+                select(pumaname10, Job_Type) %>%
+                group_by(pumaname10) %>%
+                count(Job_Type)
+
+colnames(tree_map_alt)[3] <- 'project_count' 
+tree_map_alt$shortened_puma <- sapply(strsplit(tree_map_alt$pumaname10, '- '), tail, 1)
+tree_map_alt$Job_Type <- stringr::str_replace(tree_map_alt$Job_Type , 'Alteration', 'Alterations')
+
+##### Network
+trans_types <- manhattan %>% 
+  select(transformation_type, PermitYear) %>%
+  group_by(transformation_type) %>% count(PermitYear) %>%
+  filter(transformation_type != 'No Occupancy Change')
+
+colnames(trans_types)[3] <- 'count_type'
+trans_types$from <- sapply(strsplit(trans_types$transformation_type, ' to '), head, 1)
+trans_types$to <- sapply(strsplit(trans_types$transformation_type, ' to '), tail, 1)
+
+# Create edge dataframe
+trans_types <- trans_types %>% select(from, to, count_type, PermitYear, transformation_type)
+
+# Create vertex dataframe
+trans_types_vertices <- unique(trans_types[,1]) %>% as.data.frame()
+colnames(trans_types_vertices)[1] <- 'occupancy_type'  
+
+# Create network object
+g <- graph_from_data_frame(trans_types, directed = TRUE, vertices = trans_types_vertices) %>% tidygraph::as_tbl_graph()
+
+V(g)$vertex_indegree <- degree(g, mode = 'in')
+########## melissa end
 
 # - clean TimeMachine.csv data for text analysis
 timemachine = timemachine %>%
@@ -201,20 +278,49 @@ ui <- navbarPage("Manhattan Construction",
                      )
                    )
                  ),
-                 
+###########                 
                  tabPanel("Construction",
                           mainPanel(
                             fluidRow(
+                              h2("Construction Data across Manhattan"),
+                              p("Some text explaining graphs"),
                               leafletOutput("const_new_map"),
-                              
                               br(),
                               br(),
+                              br(),
                               
-                              leafletOutput("const_alt_map")
+                              leafletOutput("const_alt_map"),
+                              br(),
+                              br(),
+                              br(),
+                              br(),
+                              br(),
+                              br()
+                              ),
+                            
+                            fluidRow(
+                              p("Some text describing the treemaps"),
+                              box(plotOutput("treemap_nb"), width = '600px', height = '500px'),
+                              br(),
+                              br(),
+                              br(),
+                              
+                              box(plotOutput("treemap_alt"), width = '600px', height = '500px'),
+                              br(),
+                              br(),
+                              br(),
+                              br(),
+                              br(),
+                              br()
+                              ),
+                            
+                            fluidRow(
+                              p("Some text explaining the network"),
+                              box(plotOutput("constr_network"), width = '600px', height = '500px')
                               )
                             )
                           ),
-
+##############
                  tabPanel("Neighborhood Attributes",
                             mainPanel(
                               fluidRow(
@@ -413,33 +519,30 @@ server <- function(input, output) {
     map_title1 <- tags$p(tags$style('p {color: black; font-size: 20px}'),
                          tags$b('Construction Across NYC\n New Buildings'))
 
-    # Color Palette for the Map: Job Permit Year
-    pal1 = colorFactor('Paired', domain = manhattan_nb$PermitYear) 
-    color_PermitYear = pal1(manhattan_nb$PermitYear)
-    
-    #post2010 <- post2010 %>% filter(CompltYear == 2020,
-    #                                Job_Type == "New Building")
+    # Color Palette 1 for the Map: Job Permit Year Group
+    pal1 = colorFactor('Dark2', domain = manhattan_nb$permit_yr_group) 
+    color_permit_yr_group = pal1(manhattan_nb$permit_yr_group)
 
+    # ORIGINAL MAP: Add ability to check the permit year and job type
     manhattan_nb_map <- leaflet(manhattan_nb) %>%
       addTiles() %>%
       addProviderTiles(providers$Wikimedia) %>% 
       
       # Add Permit Year Data
-      addCircleMarkers(color = color_PermitYear, 
+      addCircleMarkers(color = color_permit_yr_group, 
                        popup = popup_content1,
-                       group = 'Toggle: Project Permit Year',
+                       group = 'Toggle: Project Permit Year Group',
                        clusterOptions = markerClusterOptions()) %>%
-      addLegend(pal = pal1, values = ~manhattan_nb$PermitYear, title = 'Project Permit Year', position = 'bottomright') %>%
+      addLegend(pal = pal1, values = ~manhattan_nb$permit_yr_group, title = 'Project Permit Year Group', position = 'bottomright') %>%
       
       # Layers to add toggle ability
-      addLayersControl(baseGroups = c('Toggle: Project Permit Year'),
+      addLayersControl(#baseGroups = c('Toggle: Project Permit Year Group'),
                        options = layersControlOptions(collapsed = FALSE), position = 'bottomright') %>%
       
       # Add map title
       addControl(map_title1, position = 'topright')
     
     manhattan_nb_map
-
   })
 
   output$const_alt_map <- renderLeaflet({
@@ -449,40 +552,98 @@ server <- function(input, output) {
                             'Job Status:',manhattan_a$Job_Status,'<br/>',
                             'Transformation Type:',manhattan_a$transformation_type, '<br>',
                             'Building Ownership:',manhattan_a$Ownership,'<br/>',
+                            'Permit Year:',manhattan_a$PermitYear, '<br>',
                             'PUMA:',manhattan_a$PUMA2010,'<br/>')
 
     # Map Title
     map_title2 <- tags$p(tags$style('p {color: black; font-size: 20px}'),
                          tags$b('Construction Across NYC\n Building Alterations'))
+ 
+    # Color Palette 2 for the Map: Job Permit Year
+    pal2 = colorFactor('Dark2', domain = manhattan_a$permit_yr_group) 
+    color_permit_yr_group = pal2(manhattan_a$permit_yr_group)
     
-
-    #post2010 <- post2010 %>% filter(CompltYear == 2020,
-    #                                Job_Type == "Alteration")
-
-    # Color Palette for the Map: Job Permit Year
-    pal2 = colorFactor('Paired', domain = manhattan_a$PermitYear) 
-    color_PermitYear = pal2(manhattan_a$PermitYear)
     
+    # Add ability to check the permit year and job type
     manhattan_alt_map <- leaflet(manhattan_a) %>%
       addTiles() %>%
       addProviderTiles(providers$Wikimedia) %>% 
       
       # Add Permit Year Data
-      addCircleMarkers(color = color_PermitYear, 
+      addCircleMarkers(color = color_permit_yr_group, 
                        popup = popup_content2,
-                       group = 'Toggle: Project Permit Year',
+                       group = 'Toggle: Project Permit Year Group',
                        clusterOptions = markerClusterOptions()) %>%
-      addLegend(pal = pal2, values = ~manhattan_a$PermitYear, title = 'Project Permit Year', position = 'bottomright') %>%
+      addLegend(pal = pal2, values = ~manhattan_a$permit_yr_group, title = 'Project Permit Year Group', position = 'bottomright') %>%
       
       # Layers to add toggle ability
-      addLayersControl(baseGroups = c('Toggle: Project Permit Year'),
+      addLayersControl(#baseGroups = c('Toggle: Project Permit Year'),
                        options = layersControlOptions(collapsed = FALSE), position = 'bottomright') %>%
       
       # Add map title
       addControl(map_title2, position = 'topright')
     
     manhattan_alt_map
-
+  })
+  
+  output$treemap_nb <- renderPlot({
+    # Treemap: New Buildings
+    newb_tree_map <- ggplot(tree_map_newb, aes(area = project_count, fill = shortened_puma, subgroup = Job_Type, label = shortened_puma)) +
+      geom_treemap() +
+      geom_treemap_subgroup_border(colour = 'black') +
+      geom_treemap_subgroup_text(fontface = 'bold', color = '#f0f0f0', alpha = 0.7, place = 'bottomleft') +
+      geom_treemap_text(colour = 'white', place = 'center', reflow = TRUE) +
+      scale_fill_manual(values = mycolors) +
+      labs(title = 'Volume of New Building Projects in Manhattan',
+           subtitle = 'Displayed by PUMA',
+           x = NULL, 
+           y = NULL, 
+           fill = NULL) +
+      theme_minimal() +
+      theme(plot.title = element_text(hjust = 0.5)) +
+      theme(plot.subtitle = element_text(hjust = 0.5)) +
+      theme(legend.position = 'none')
+    
+    newb_tree_map
+  })
+  
+  output$treemap_alt <- renderPlot({
+    # Treemap: Alterations
+    alt_tree_map <- ggplot(tree_map_alt, aes(area = project_count, fill = shortened_puma, subgroup = Job_Type, label = shortened_puma)) +
+      geom_treemap() +
+      geom_treemap_subgroup_border(colour = 'black') +
+      geom_treemap_subgroup_text(fontface = 'bold', color = '#f0f0f0', alpha = 0.7, place = 'bottomleft') +
+      geom_treemap_text(colour = 'white', place = 'center', reflow = TRUE) +
+      scale_fill_manual(values = mycolors) +
+      labs(title = 'Volume of Building Alteration Projects in Manhattan',
+           subtitle = 'Displayed by PUMA',
+           x = NULL, 
+           y = NULL, 
+           fill = NULL) +
+      theme_minimal() +
+      theme(plot.title = element_text(hjust = 0.5)) +
+      theme(plot.subtitle = element_text(hjust = 0.5)) +
+      theme(legend.position = 'none')
+    
+    alt_tree_map
+  })   
+  
+  output$constr_network <- renderPlot({
+  ###### Arrow Edges- kk layout
+  network_g <- ggraph(g, layout = 'kk', maxiter = 1000) +
+    geom_edge_link(arrow = arrow(length = unit(4, 'mm')), end_cap = circle(2, 'mm'), alpha = 1, width = 0.7, color = 'azure4', check_overlap = TRUE) +
+    geom_node_point(color = 'black', shape = 21, aes(fill = as.factor(name), size = vertex_indegree), show.legend = TRUE) +
+    geom_node_text(aes(label = name), color = 'black', vjust = 1.5, show.legend = FALSE, size = 5, check_overlap = TRUE) +
+    ggtitle('Building Occupancy Transformations in Manhattan Construction\n 2000 - Present') +
+    theme(legend.key = element_rect(fill = 'white', color = 'black'), 
+          legend.title = element_text(face = 'bold', size = 15),
+          legend.position = 'right',
+          legend.text = element_text(size = 15),
+          plot.title.position = 'plot',
+          plot.title = element_text(hjust = 0.5)) +
+    scale_fill_brewer(name = 'Building Occupancy Type', palette = 'Dark2') 
+  
+  network_g
   })
   
   output$wordcloud <- renderPlot({
