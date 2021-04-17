@@ -28,18 +28,13 @@ library(ggraph)
 library(magrittr)
 
 
-<<<<<<< Updated upstream
-
-
-setwd('/Users/Melissa/Desktop/Data Visualization SP21/Group_J_NYCRealEstate/')
-#setwd("C:/Users/natal/Desktop/QMSS/Spring 2021/Data_Visualization/project/Group_J_NYCRealEstate/")
-setwd("G:/My Drive/0 Data Viz/project/Group_J_NYCRealEstate/")
-=======
 setwd('/Users/Melissa/Desktop/Data Visualization SP21/Group_J_NYCRealEstate/')
 #setwd("C:/Users/natal/Desktop/QMSS/Spring 2021/Data_Visualization/project/Group_J_NYCRealEstate/")
 #setwd("G:/My Drive/0 Data Viz/project/Group_J_NYCRealEstate/")
->>>>>>> Stashed changes
 
+
+
+## ---------------------------------------------------- DATA -----------------------------------------
 
 # ------ load data
 
@@ -57,8 +52,8 @@ pre_puma <- read.csv('construction_data/HousingDB_by_PUMA.csv') # by puma
 pre_post2010 <- read.csv('construction_data/HousingDB_post2010.csv') # detailed
 
 timemachine <- read_csv("time-machine-NLP/TimeMachine.csv")
-df_sentiment <- read_csv("time-machine-NLP/neighborhood_sentiment_scores.csv")
-df_wordcount <- read_csv("time-machine-NLP/wordcount_by_year.csv")
+df_sentiment <- read_csv("time-machine-NLP/neighborhood_sentiment_scores.csv") %>% filter(year >=2009)
+df_wordcount <- read_csv("time-machine-NLP/wordcount_by_year.csv") %>% filter(year >=2009)
 
 # ------ edit variables
 
@@ -115,12 +110,14 @@ housing_acs <- acs1 %>%
   mutate(year = as.numeric(gsub("est_", "", year))) 
 
 permit_rental_price <- housing_acs %>% 
-  filter(variable == "med_grossrent") %>%
+  filter(variable == "med_grossrent",
+         borough == "Manhattan") %>%
   select(puma_code, year, variable, estimate) %>%
   left_join(res_permit_count, by = c("puma_code", "year"))
 
 permit_home_value <- housing_acs %>% 
-  filter(variable == "med_value") %>%
+  filter(variable == "med_value",
+         borough == "Manhattan") %>%
   select(puma_code, year, variable, estimate) %>%
   left_join(res_permit_count, by = c("puma_code", "year"))
 
@@ -267,39 +264,152 @@ input_neighborhood <- unique(timemachine$neighborhood)
 
 unique(housing_acs$variable)
 
+
+## Data manipulation for demographics
+
+
+
+# ------ wrangle data
+med_age <- acs1_manhattan %>%
+  filter(variable == "med_age") %>%
+  pivot_longer(names_to = "year", values_to = "estimate", cols = c(est_2009:est_2019)) %>%
+  mutate(year = as.numeric(gsub("est_", "", year))) %>%
+  select(-GEOID)
+
+#View(med_age)
+mean_group <- aggregate(x = med_age$estimate,
+                        by=list(puma_name = med_age$puma_name, year = med_age$year),
+                        FUN=mean)
+#View(mean_group)
+names(mean_group)[3] <- "median_age"
+## 
+
+# population 
+
+population <- acs1_manhattan %>%
+  filter(variable == "population") %>%
+  pivot_longer(names_to = "year", values_to = "estimate", cols = c(est_2009:est_2019)) %>%
+  mutate(year = as.numeric(gsub("est_", "", year))) %>%
+  select(-GEOID)
+
+#View(med_age)
+pop_group <- aggregate(x = population$estimate,
+                        by=list(puma_name = population$puma_name, year = population$year),
+                        FUN=mean)
+
+names(pop_group)[3] <- "median_population"
+
+
+# Income level 
+
+income <- acs1_manhattan %>%
+  filter(variable == "hhincome") %>%
+  pivot_longer(names_to = "year", values_to = "estimate", cols = c(est_2009:est_2019)) %>%
+  mutate(year = as.numeric(gsub("est_", "", year))) %>%
+  select(-GEOID)
+
+
+income_group <- aggregate(x = income$estimate,
+                       by=list(puma_name = income$puma_name, year = income$year),
+                       FUN=mean)
+
+names(income_group)[3] <- "median_income"
+
+# gender 
+
+#View(acs1_manhattan)
+gender_female <- acs1_manhattan %>%
+  filter(variable == "female") %>%
+  pivot_longer(names_to = "year", values_to = "estimate", cols = c(est_2009:est_2019)) %>%
+  mutate(year = as.numeric(gsub("est_", "", year))) %>%
+  select(-GEOID)
+
+gender_male <- acs1_manhattan %>%
+  filter(variable == "male") %>%
+  pivot_longer(names_to = "year", values_to = "estimate", cols = c(est_2009:est_2019)) %>%
+  mutate(year = as.numeric(gsub("est_", "", year))) %>%
+  select(-GEOID)
+
+gender = rbind(gender_female,gender_male)
+
+ gender_2019 <- gender %>%
+  filter (year == 2019)
+
+ library(tidyverse)
+ gender_clean <- gender_2019 %>% 
+   group_by(puma_code) %>% 
+   mutate(fraction = estimate/sum(estimate)) %>% 
+   ungroup 
+
+ gender_clean$ymax <- gender_clean$fraction
+ # Compute the bottom of each rectangle
+ gender_clean$ymin <- c(0, head(gender_clean$ymax, n=-1))
+ # Compute label position
+ gender_clean$labelPosition <- (gender_clean$ymax + gender_clean$ymin) / 2
+ 
+ # Compute a good label
+ gender_clean$percentage <- label_percent()(gender_clean$fraction)
+ gender_clean$label <- paste0(gender_clean$variable, "\n value: ", gender_clean$percentage)
+
+ 
+ names(gender_clean)[1] <- "gender"
+ 
+ # Move situation 
+# View(acs5_manhattan)
+ 
+ move <-  acs5_manhattan %>%
+   filter(variable == "B07001_017" | variable == "B07001_033" |variable == "B07001_049"|variable == "B07001_065"|variable == "B07001_081")
+ 
+ # segmenting data 
+ 
+move_clean <- move %>% 
+   group_by(puma_code) %>% 
+   mutate(fraction = est_2019/sum(est_2019)) %>% 
+   ungroup 
+ 
+
+
+library(dplyr)
+library(car)
+move_clean <- mutate(move_clean, variable= recode(variable, "'B07001_017'='No move'"))
+move_clean <- mutate(move_clean, variable= recode(variable, "'B07001_033'='Same county'"))
+move_clean <- mutate(move_clean, variable= recode(variable, "'B07001_049'='Different county, same state'"))
+move_clean <- mutate(move_clean, variable= recode(variable, "'B07001_065'='Different state'"))
+move_clean <- mutate(move_clean, variable= recode(variable, "'B07001_081'='Abroad'"))
+
+names(move_clean)[2] <- "move_from"
+
+
 # ------ color 
 dark2 <- colorRampPalette(brewer.pal(8, "Dark2"))(10)
 
-# ------ wip plots
 
-# run some regression models to see if any relationship
-#plm(permit_count ~ estimate, index = c("puma_name", "year"), model = "fd", data = permit_rental_price[permit_rental_price$permit_type == "New Building",])
-
-
-# --------------------- dashboard w/ sidebar panel ----------------------
-
-## -------------------- UI
+## ---------------------------------------------------- DASHBOARD -----------------------------------------
+## ---------------------------------------------------- UI -----------------------------------------
 ui <- navbarPage("Manhattan Construction",
-                 
-                 tabPanel("Main",
-                   mainPanel(
-                     
-                     h2("Manhattan Construction and Neighborhood Changes Over Time"),
-                     h5("By Melissa S Feeney, Catherine Chen, Natalie Weng, Michelle A. Zee"),
-                     p("This project examines the Manhattan residential and commercial building construction permits 
-                     and associated changes in neighborhoods from 2009 to 2019. Data used include construction permit 
-                     data from the NYC Department of Buildings, demographic and home price data from the American 
-                     Community Survey, and neighborhood descriptions from Wikipedia.
-                       "),
-                     p("Explain background on project....why we chose to focus on Manhattan..."),
-                     
-                     fluidRow(
-                       box(plotOutput("homeprice_vs_permit", height = "45vh"), height = "45vh"),
-                       box(plotOutput("rent_vs_permit", height = "45vh"), height = "45vh")
+                
+  ## ---------------------------------------------------- main -----------------------------------------
+                   tabPanel("Main",
+                     mainPanel(
+                       
+                       h2("Manhattan Construction and Neighborhood Changes Over Time"),
+                       h5("By Melissa S Feeney, Catherine Chen, Natalie Weng, Michelle A. Zee"),
+                       p("This project examines the Manhattan residential and commercial building construction permits 
+                       and associated changes in neighborhoods from 2009 to 2019. Data used include construction permit 
+                       data from the NYC Department of Buildings, demographic and home price data from the American 
+                       Community Survey, and neighborhood descriptions from Wikipedia.
+                         "),
+                       p("Explain background on project....why we chose to focus on Manhattan..."),
+                       
+                       fluidRow(
+                         box(plotOutput("homeprice_vs_permit", height = "45vh"), height = "45vh"),
+                         box(plotOutput("rent_vs_permit", height = "45vh"), height = "45vh")
+                       )
                      )
+
                    )
                  ),
-###########                 
+                 
                  tabPanel("Construction",
                           mainPanel(
                             fluidRow(
@@ -333,21 +443,69 @@ ui <- navbarPage("Manhattan Construction",
                               the in-degree of the empity site node is 0. Across both types of construction projects, transformations into residential and commercial buildings have been the most frequent in the past 20 years.
                               On the contrary, transformations into educational occupancy buildings have been the least frequent in this time range.'),
                               box(width = 12, plotOutput('constr_network'))
-                              )
-                            )
-                          ),
-##############
-                 tabPanel("Neighborhood Attributes",
+
+                   ),
+  
+  ## ---------------------------------------------------- melissa -----------------------------------------
+                   
+                   tabPanel("Construction",
                             mainPanel(
                               fluidRow(
+                                h2("Construction Data across Manhattan"),
+                                p("Some text explaining graphs"),
+                                leafletOutput("const_new_map"),
+                                br(),
+                                br(),
+                                br(),
+                                
+                                leafletOutput("const_alt_map"),
+                                br(),
+                                br(),
+                                br(),
+                                br(),
+                                br(),
+                                br()
+                                ),
+                              
+                              fluidRow(
+                                p("Some text describing the treemaps"),
+                                box(plotOutput("treemap_nb"), width = '600px', height = '500px'),
+                                br(),
+                                br(),
+                                br(),
+                                
+                                box(plotOutput("treemap_alt"), width = '600px', height = '500px'),
+                                br(),
+                                br(),
+                                br(),
+                                br(),
+                                br(),
+                                br()
+                                ),
+                              
+                              fluidRow(
+                                p("Some text explaining the network"),
+                                box(plotOutput("constr_network"), width = '600px', height = '500px')
+                                )
+
+                              )
+                            ),
+  
+  ## ---------------------------------------------------- michelle -----------------------------------------
+
+                 tabPanel("Home Value",
+                            mainPanel(
+                              fluidRow(
+                                box(
                                   h2("Explore Construction Data with Neighborhood Attributes"),
-                                  p("Some text explaining graphs"),
-                                  
+                                  p("Some text explaining graphs")),
+                                
+                                box(
                                   selectInput("puma",
                                               label = "Choose Neighborhood:",
                                               choices = input_puma,
                                               selected = "Upper West Side & West Side",
-                                              width = "50%")),
+                                              width = "50%"))),
 
                               fluidRow(
                                 box(plotlyOutput("res_new_permit")),
@@ -363,25 +521,65 @@ ui <- navbarPage("Manhattan Construction",
                                 box())
                               )
                           ),
+  ## ---------------------------------------------------- catherine -----------------------------------------
                  
+                 tabPanel("Demographics",
+                          mainPanel(
+                            fluidRow(
+                              h2("Explore Neighborhood Demographics"),
+                              p("The below graphs show the representative demographics 
+                                of 10 the neighborhood in Manhattan. These include: median
+                                age, population, median income, gender and where they moved from.
+                                The demographics painted a vivid picture of what type of people 
+                                live in and consist of each neighborhood, and how their migration
+                                pattern affects the alteration and progression of city's real estate.
+                                "),
+                              
+                            
+                              selectInput("puma",
+                                          label = "Choose Neighborhood:",
+                                          choices = input_puma,
+                                          selected = "Upper West Side & West Side",
+                                          width = "50%")),
+                            fluidRow(
+                              box(plotOutput("median_age")),
+                              box(plotOutput("population"))),
+                            br(), br(),
+                              
+                            fluidRow(
+                              column(8, align="center",
+                              box(plotOutput("income"))),
+                            br(), br(),
+                            
+                            fluidRow(
+                              box(plotOutput("gender")),
+                              box(plotOutput("move"))
+                              )
+                            ))),
+                 
+  ## ---------------------------------------------------- natalie -----------------------------------------
+
                  tabPanel("Neighborhoods in Words",
                           mainPanel(
                             fluidRow(
-                              h2("How are neighborhoods described through time?"),
-                              p("The four graphs below show how a Manhattan neighborhood is described from 2010 to 2021. The word cloud comapres the words that are used to describe a neighborhood in 2010 vs. 2021. The data was collected using the way-back-machine Python API that queries historical versions of a certain webpage stored in Internet Archives."),
-                              
-                              p("Select the year to compare against 2010 below and the number of words to use in the comparison."),
-                              selectInput("nlp_neighborhood",
-                                          label = "Choose Neighborhood:",
-                                          choices = input_neighborhood,
-                                          selected= "Chinatown",
-                                          width = "50%"),
-                              sliderInput( inputId = "nlp_year",
-                                                  label="Choose a Year",
-                                                  value=2019, min=2010, max=2021),
-                              sliderInput("max",
-                                                 "Maximum Number of Words:",
-                                                 min = 50,  max = 300,  value = 100)),
+                              box(
+                                h2("How are neighborhoods described through time?"),
+                                p("The four graphs below show how a Manhattan neighborhood is described from 2010 to 2021. The word cloud comapres the words that are used to describe a neighborhood in 2010 vs. 2021. The data was collected using the way-back-machine Python API that queries historical versions of a certain webpage stored in Internet Archives."),
+                                p("Select the year to compare against 2010 below and the number of words to use in the comparison.")),
+                              box(
+                                selectInput("nlp_neighborhood",
+                                            label = "Choose Neighborhood:",
+                                            choices = input_neighborhood,
+                                            selected= "Chinatown",
+                                            width = "50%"),
+                                sliderInput( inputId = "nlp_year",
+                                                    label="Choose a Year",
+                                                    value=2019, min=2010, max=2021, sep = "", ticks = FALSE),
+                                sliderInput("max",
+                                                   "Maximum Number of Words:",
+                                                   min = 50,  max = 300,  value = 100, ticks = FALSE))),
+                            br(), br(),
+                            
                             fluidRow(
                               column(3,p("Chosen Year"),offset=4),
                               plotOutput("wordcloud"),
@@ -398,9 +596,11 @@ ui <- navbarPage("Manhattan Construction",
                           )
 )
 
-## -------------------- server
+
+## ---------------------------------------------------- SERVER -----------------------------------------
 server <- function(input, output) {
   
+  ## ---------------------------------------------------- michelle -----------------------------------------
   output$homeprice_vs_permit <- renderPlot({
     ggplot(permit_home_value, aes(log(permit_count), estimate, color = borough)) +
       geom_point(alpha = 0.5) +
@@ -410,7 +610,7 @@ server <- function(input, output) {
       theme_minimal() +
       labs(x = "Number of Permits (Log Transformed)", y = "Median Home Value",
            title = "NYC Median Home Value vs Residential Construction Permits") +
-      theme(legend.position = "bottom")
+      theme(legend.position = "none")
   })
   
   output$rent_vs_permit <- renderPlot({
@@ -422,7 +622,7 @@ server <- function(input, output) {
       theme_minimal() +
       labs(x = "NYC Number of Permits (Log Transformed)", y = "Median Gross Rent (per Month)",
            title = "Median Rent vs Residential Construction Permits") +
-      theme(legend.position = "bottom")
+      theme(legend.position = "none")
   })
   
   output$res_new_permit <- renderPlotly({
@@ -434,10 +634,11 @@ server <- function(input, output) {
       summarise(permit_count = sum(permit_count))
     
     p <- ggplot(data, aes(year, permit_count)) + 
-      geom_point(color = "gray",
+      geom_point(data = subset(data, puma_name != input$puma),
+                 color = "gray",
                  size = 2, 
                  alpha = 0.5) +
-      geom_point(data = subset(x = data, puma_name == input$puma), 
+      geom_point(data = subset(data, puma_name == input$puma), 
                  color = "#1B9E77",
                  size = 3) +
       scale_x_continuous(breaks= c(2009:2019)) +
@@ -446,6 +647,8 @@ server <- function(input, output) {
            title = "Residential New Building Permits")
     
     ggplotly(p)
+    style(p, text = paste(data$puma_name,"\n",
+                          'Value: ',data$permit_count))
   })
   
   output$res_alt_permit <- renderPlotly({
@@ -469,6 +672,9 @@ server <- function(input, output) {
            title = "Residential Alteration Permits")
     
     ggplotly(p)
+    
+    style(p, text = paste(data$puma_name,"\n",
+                          'Value: ',data$permit_count))
   })
   
   output$rental_price <- renderPlotly({
@@ -477,11 +683,10 @@ server <- function(input, output) {
              borough == "Manhattan",
              year >= 2009)
 
-    p <- ggplot(data, aes(x = year, y = estimate, color = puma_name)) + 
-      geom_line(aes(x = year, y = estimate, color = puma_name), alpha = 0.3) +
-      geom_line(data = subset(x = data, puma_name == input$puma), 
-                 color = "#1B9E77",
-                 size = 1.5) +      
+    p <- ggplot(data, aes(x = year, y = estimate, color = puma_name)) +
+      geom_line(size = 1.5) +
+      gghighlight(puma_name == input$puma) +
+      scale_color_manual(values = dark2) +
       scale_x_continuous(breaks= c(2009:2019)) +
       scale_y_continuous(labels = scales::dollar) +
       theme_minimal() +
@@ -490,6 +695,9 @@ server <- function(input, output) {
       theme(legend.position = "none")
     
     ggplotly(p)
+    
+    style(p, text = paste(data$puma_name,"\n",
+                          'Value: ',data$permit_count))
   })
   
   output$home_value <- renderPlotly({
@@ -498,12 +706,10 @@ server <- function(input, output) {
              borough == "Manhattan",
              year >= 2009)
 
-    p <- ggplot(data, aes(label = puma_name, label2 = estimate)) + # ----------------------------------- figure out textbox info
-      geom_line(aes(x = year, y = estimate, color = puma_name), alpha = 0.3) +
-      geom_line(data = subset(x = data, puma_name == input$puma),
-                aes(x = year, y = estimate),
-                color = "#1B9E77",
-                size = 1.5) +     
+    p <- ggplot(data, aes(x = year, y = estimate, color = puma_name)) +
+      geom_line(size = 1.5) +
+      gghighlight(puma_name == input$puma) +
+      scale_color_manual(values = dark2) +     
       scale_x_continuous(breaks= c(2009:2019)) +
       scale_y_continuous(labels = scales::dollar) +
       theme_minimal() +
@@ -512,6 +718,9 @@ server <- function(input, output) {
       theme(legend.position = "none")
     
     ggplotly(p)
+    
+    style(p, text = paste(data$puma_name,"\n",
+                          'Value: ',data$permit_count))
   })
   
   output$renter_pct <- renderPlot({
@@ -528,21 +737,13 @@ server <- function(input, output) {
       scale_x_continuous(breaks= c(2009:2019)) +
       labs(x = year_lab, y = "Proportion",
            title = "Occupancy by Renters vs Owners")
+    
+    # style(p, text = paste(data$puma_name,"\n",
+    #                       'Value: ',data$permit_count))
   })
   
-  
-  # output$med_age <- renderPlot({
-  #   ggplot(med_age, aes(year, estimate, color = puma_name)) +
-  #     geom_line(size = 1.5) +
-  #     gghighlight(puma_name == input$puma) +
-  #     scale_color_manual(values = dark2) +
-  #     scale_x_continuous(breaks= c(2009:2019)) +
-  #     theme_minimal() +
-  #     labs(x = year_lab, y = age_lab,
-  #          title = "Median Age")
-  # })
-  
-  ######### melissa
+
+  ## ---------------------------------------------------- melissa -----------------------------------------
   output$const_new_map <- renderLeaflet({
     # New Construction Map
     # Prep Pop-up details
@@ -689,6 +890,8 @@ server <- function(input, output) {
   network_g
   })
   
+  ## ---------------------------------------------------- natalie -----------------------------------------
+  
   output$wordcloud <- renderPlot({
     cloud.year = timemachine %>%
       filter(neighborhood==input$nlp_neighborhood) %>%
@@ -715,6 +918,7 @@ server <- function(input, output) {
   
   output$wiki_edits_through_time <- renderPlotly({
     df = timemachine %>%
+      filter(date >=2009) %>%
       group_by(year, neighborhood) %>%
       summarise(total = n())
     
@@ -722,9 +926,11 @@ server <- function(input, output) {
       ggplot(df, aes(year, total, color=neighborhood)) +
       geom_line(size=1)+
       gghighlight(neighborhood == input$nlp_neighborhood)+
+      scale_x_continuous(breaks= c(2009:2021)) +
       scale_color_manual(values=dark2) + 
       labs(x = "Year", y="Total Number of Wikipedia Page Revisions",
            title="Number of Wikipedia Page Revisions by Year") +
+        
       theme_minimal()
     )
   })
@@ -735,6 +941,7 @@ server <- function(input, output) {
         ggplot(df_sentiment, aes(year, score, color=neighborhood)) +
           geom_line(size=1) + theme_minimal() +
           gghighlight(neighborhood == input$nlp_neighborhood)+
+          scale_x_continuous(breaks= c(2009:2021)) +
           scale_color_manual(values=dark2) + 
           labs(x = "Year", y="Positive/Negative Sentiment Score",
                title="Neighborhood Sentiment Through Time")
@@ -747,11 +954,90 @@ server <- function(input, output) {
       ggplot(df_wordcount, aes(year, count, color=neighborhood)) +
         geom_line(size=1) + theme_minimal() +
         gghighlight(neighborhood == input$nlp_neighborhood)+
+        scale_x_continuous(breaks= c(2009:2021)) +
         scale_color_manual(values=dark2) + 
         labs(x = "Year", y="Median Word Count",
              title="Wikipedia Page Length by Year")
     )
   })
+  
+  ## ---------------------------------------------------- catherine -----------------------------------------
+  
+  output$median_age <- renderPlot({
+    
+      ggplot(mean_group, aes(as.factor(year), median_age, colour=puma_name)) + 
+        geom_line(aes(group = puma_name)) + 
+        gghighlight(puma_name == input$puma) +
+        ggtitle("Neighborhood Median Age Through Years") +
+        xlab("Year") + ylab("Median Age")+
+       geom_point()},height = 400, width = 300) 
+  
+  
+  output$population <- renderPlot({
+    
+    ggplot(pop_group, aes(as.factor(year), median_population, colour=puma_name)) + 
+      geom_line(aes(group = puma_name)) + 
+      gghighlight(puma_name == input$puma) +
+      ggtitle("Neighborhood Median Population Through Years") +
+      xlab("Year") + ylab("Median Population")+
+      geom_point()},height = 400, width = 320) 
+  
+  
+  output$income <- renderPlot({
+
+    ggplot(income_group, aes(x = year, y = median_income, fill = puma_name)) +
+      geom_area(color = "white", alpha = 0.4) +
+      scale_fill_brewer(palette = "Paired") +
+      scale_x_continuous(breaks= c(2009:2019)) +
+     # gghighlight(puma_name == input$puma) +
+      scale_y_continuous(expand = c(0, 0), labels = scales::dollar) +
+      labs(title = "",
+           subtitle = "Median Household Income by Neighborhood, 2009-2019",
+           caption = "Source: ACS",
+           x = NULL,
+           y = "Median Household Income ($)",
+           fill = NULL) +
+      theme(panel.grid.major.x = element_blank(),
+            legend.position = "bottom")}, height = 400, width = 580) 
+  
+  
+  output$gender <- renderPlot({
+    
+    ggplot(data = subset(x = gender_clean, puma_name == "East Harlem"), aes(x="", y=fraction, fill=gender))+
+      geom_bar(width = 1, stat = "identity") +
+      scale_fill_brewer(palette="dark2")+
+      theme_minimal()+
+      theme(legend.key.size = unit(0.3, "cm"),
+            legend.margin = margin(0.5, 10, 0.5, 10))+
+      coord_polar("y", start=0)+
+          labs(fill="gender",
+                     x=NULL,
+                     y=NULL, 
+                     title="Gender Distribution",
+                     caption="Source: ACS")}) 
+  
+  
+  output$move <- renderPlot({
+    
+    ggplot(data = subset(x = move_clean, puma_name == "East Harlem"), aes(x="", y=fraction, fill= move_from))+
+      geom_bar(width = 1, stat = "identity") +
+      theme(axis.line = element_blank() )+
+      scale_fill_manual(value = dark2) +
+      theme_minimal()+
+      coord_polar("y", start=0) +
+      
+      theme(legend.key.size = unit(0.3, "cm"),
+            legend.margin = margin(0.5, 10, 0.5, 10))+
+      labs(fill="move_from",
+           x=NULL,
+           y=NULL, 
+           title="Last Move From Distribution",
+           caption="Source: ACS")}) 
+  
+  
+  
+  
+  
 }
 
 shinyApp(ui, server)
