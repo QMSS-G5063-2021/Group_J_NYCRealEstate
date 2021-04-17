@@ -27,9 +27,11 @@ library(tidyr)
 library(ggraph)
 library(magrittr)
 
-#setwd('/Users/Melissa/Desktop/Data Visualization SP21/Group_J_NYCRealEstate/')
+
+setwd('/Users/Melissa/Desktop/Data Visualization SP21/Group_J_NYCRealEstate/')
 #setwd("C:/Users/natal/Desktop/QMSS/Spring 2021/Data_Visualization/project/Group_J_NYCRealEstate/")
-setwd("G:/My Drive/0 Data Viz/project/Group_J_NYCRealEstate/")
+#setwd("G:/My Drive/0 Data Viz/project/Group_J_NYCRealEstate/")
+
 
 
 ## ---------------------------------------------------- DATA -----------------------------------------
@@ -130,6 +132,7 @@ renter_pct <- acs1_manhattan %>%
   select(-occupied_owner, -occupied_renter) %>%
   pivot_longer(names_to = "variable", values_to = "estimate", cols = c(renter_pct, owner_pct))
 
+############################# Map Data Wrangling
 puma <- pre_puma %>% select(boro, puma2010, pumaname10)
 
 # Remove Demolition projects from dataset
@@ -186,7 +189,7 @@ for (i in 1:nrow(manhattan)){
   else if (manhattan$PermitYear[i] >= 2015 && manhattan$PermitYear[i] <= 2019){
     manhattan$permit_yr_group[i] <- '2015 - 2019'} 
   else {
-    manhattan$permit_yr_group[i] <- '2020 - present'}
+    manhattan$permit_yr_group[i] <- '2020 - Present'}
 }
 
 # Manhattan New Buildings
@@ -220,7 +223,7 @@ colnames(tree_map_alt)[3] <- 'project_count'
 tree_map_alt$shortened_puma <- sapply(strsplit(tree_map_alt$pumaname10, '- '), tail, 1)
 tree_map_alt$Job_Type <- stringr::str_replace(tree_map_alt$Job_Type , 'Alteration', 'Alterations')
 
-##### Network
+############################# Network Data Wrangling
 trans_types <- manhattan %>% 
   select(transformation_type, PermitYear) %>%
   group_by(transformation_type) %>% count(PermitYear) %>%
@@ -403,6 +406,44 @@ ui <- navbarPage("Manhattan Construction",
                          box(plotOutput("rent_vs_permit", height = "45vh"), height = "45vh")
                        )
                      )
+
+                   )
+                 ),
+                 
+                 tabPanel("Construction",
+                          mainPanel(
+                            fluidRow(
+                              h2('Construction across Manhattan'),
+                              br(), br(),
+                              h4('Overview of Manhattan Construction'),
+                              p("Some text explaining graphs"),
+                              leafletOutput('const_new_map'),
+                            br(), br(), br(),
+                              
+                              leafletOutput('const_alt_map'),
+                            br(), br(), br(), br()
+                              ),
+                            
+                            fluidRow(
+                              h2('Construction Project Composition by Neighborhood'),
+                              p("The sizes of the boxes represent the volume of new building projects and building alteration projects within each neighborhood group,determined by PUMA.
+                                Over the past 20 years, Chelsea, Clinton, and Midtown have been the neighborhoods with the most new buildings constructed. In that same time range, Battery Park City, Greenwoch Village and
+                                Soho have been the neighborhoods with the most building alteration projects. Given these observations, it could be interesting to investigate the changes in proposed occupancy among both types
+                                of projects."),
+                              box(plotOutput('treemap_nb')),
+                              box(plotOutput('treemap_alt')),
+                            br(), br(), br(), br()
+                              ),
+                            
+                            fluidRow(
+                              br(), br(), br(), br(),
+                              h2('Building Occupancy Transformations'),
+                              p('As a result of the new building and alteration construction projects mentioned above, buildings have often changed occupancy types. Each node represents one of the occupancy types, with the size
+                              determined by the in-degree of each node, as a way to represent the transformations into said occupancy type. It is worth noting that since all new building construction projects start from empty sites,
+                              the in-degree of the empity site node is 0. Across both types of construction projects, transformations into residential and commercial buildings have been the most frequent in the past 20 years.
+                              On the contrary, transformations into educational occupancy buildings have been the least frequent in this time range.'),
+                              box(width = 12, plotOutput('constr_network'))
+
                    ),
   
   ## ---------------------------------------------------- melissa -----------------------------------------
@@ -446,6 +487,7 @@ ui <- navbarPage("Manhattan Construction",
                                 p("Some text explaining the network"),
                                 box(plotOutput("constr_network"), width = '600px', height = '500px')
                                 )
+
                               )
                             ),
   
@@ -718,9 +760,10 @@ server <- function(input, output) {
     pal1 = colorFactor('Dark2', domain = manhattan_nb$permit_yr_group) 
     color_permit_yr_group = pal1(manhattan_nb$permit_yr_group)
 
-    # ORIGINAL MAP: Add ability to check the permit year and job type
+    # Add ability to check the permit year and job type
     manhattan_nb_map <- leaflet(manhattan_nb) %>%
       addTiles() %>%
+      setView(lng = -73.98928, lat = 40.75042, zoom = 12) %>%
       addProviderTiles(providers$Wikimedia) %>% 
       
       # Add Permit Year Data
@@ -762,6 +805,7 @@ server <- function(input, output) {
     # Add ability to check the permit year and job type
     manhattan_alt_map <- leaflet(manhattan_a) %>%
       addTiles() %>%
+      setView(lng = -73.98928, lat = 40.75042, zoom = 12) %>%
       addProviderTiles(providers$Wikimedia) %>% 
       
       # Add Permit Year Data
@@ -789,8 +833,8 @@ server <- function(input, output) {
       geom_treemap_subgroup_text(fontface = 'bold', color = '#f0f0f0', alpha = 0.7, place = 'bottomleft') +
       geom_treemap_text(colour = 'white', place = 'center', reflow = TRUE) +
       scale_fill_manual(values = mycolors) +
-      labs(title = 'Volume of New Building Projects in Manhattan',
-           subtitle = 'Displayed by PUMA',
+      labs(title = 'Volume of New Building Projects',
+           subtitle = '2000 - Present',
            x = NULL, 
            y = NULL, 
            fill = NULL) +
@@ -810,8 +854,8 @@ server <- function(input, output) {
       geom_treemap_subgroup_text(fontface = 'bold', color = '#f0f0f0', alpha = 0.7, place = 'bottomleft') +
       geom_treemap_text(colour = 'white', place = 'center', reflow = TRUE) +
       scale_fill_manual(values = mycolors) +
-      labs(title = 'Volume of Building Alteration Projects in Manhattan',
-           subtitle = 'Displayed by PUMA',
+      labs(title = 'Volume of Building Alteration Projects',
+           subtitle = '2000 - Present',
            x = NULL, 
            y = NULL, 
            fill = NULL) +
@@ -824,8 +868,8 @@ server <- function(input, output) {
   })   
   
   output$constr_network <- renderPlot({
-  ###### Arrow Edges- kk layout
-  network_g <- ggraph(g, layout = 'kk', maxiter = 1000) +
+  ###### Arrow Edges- circle layout
+  network_g <- ggraph(g, layout = 'circle') +
     geom_edge_link(arrow = arrow(length = unit(4, 'mm')), end_cap = circle(2, 'mm'), alpha = 1, width = 0.7, color = 'azure4', check_overlap = TRUE) +
     geom_node_point(color = 'black', shape = 21, aes(fill = as.factor(name), size = vertex_indegree), show.legend = TRUE) +
     geom_node_text(aes(label = name), color = 'black', vjust = 1.5, show.legend = FALSE, size = 5, check_overlap = TRUE) +
@@ -836,7 +880,12 @@ server <- function(input, output) {
           legend.text = element_text(size = 15),
           plot.title.position = 'plot',
           plot.title = element_text(hjust = 0.5)) +
-    scale_fill_brewer(name = 'Building Occupancy Type', palette = 'Dark2') 
+    scale_fill_brewer(name = 'Building Occupancy Type', palette = 'Dark2') +
+    scale_size_continuous(name = 'Count of Transformations\n represented by in-degree', 
+                          labels = c('previous building transformed into (node) 0 times',
+                                     'previous building transformed into (node) 20 times',
+                                     'previous building transformed into (node) 40 times',
+                                     'previous building transformed into (node) 60 times'))
   
   network_g
   })
