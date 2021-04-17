@@ -18,10 +18,12 @@ library(wordcloud)
 library(plotly)
 library(quanteda)
 
-#setwd("C:/Users/natal/Desktop/QMSS/Spring 2021/Data_Visualization/project/Group_J_NYCRealEstate/")
-
 ##### Change to my working directory
-setwd('/Users/Melissa/Desktop/Data Visualization SP21/Group_J_NYCRealEstate/')
+
+#setwd('/Users/Melissa/Desktop/Data Visualization SP21/Group_J_NYCRealEstate/')
+#setwd("C:/Users/natal/Desktop/QMSS/Spring 2021/Data_Visualization/project/Group_J_NYCRealEstate/")
+setwd("G:/My Drive/0 Data Viz/project/Group_J_NYCRealEstate/")
+
 
 # ------ load data
 
@@ -102,6 +104,16 @@ permit_home_value <- housing_acs %>%
   filter(variable == "med_value") %>%
   select(puma_code, year, variable, estimate) %>%
   left_join(res_permit_count, by = c("puma_code", "year"))
+
+renter_pct <- acs1_manhattan %>%
+  filter(variable %in% c("occupied_total", "occupied_renter", "occupied_owner")) %>%
+  pivot_longer(names_to = "year", values_to = "estimate", cols = c(est_2009:est_2019)) %>%
+  mutate(year = as.numeric(gsub("est_", "", year))) %>%
+  pivot_wider(names_from = variable, values_from = estimate) %>%
+  mutate(renter_pct = occupied_renter/ occupied_total,
+         owner_pct = occupied_owner/ occupied_total) %>%
+  select(-occupied_owner, -occupied_renter) %>%
+  pivot_longer(names_to = "variable", values_to = "estimate", cols = c(renter_pct, owner_pct))
 
 puma <- pre_puma %>% select(boro, puma2010, pumaname10)
 post2010 <- pre_post2010 %>%
@@ -196,7 +208,7 @@ ui <- navbarPage("Manhattan Construction",
                                 box(plotlyOutput("home_value"))),
                               
                               fluidRow(
-                                box(plotOutput("med_age")),
+                                box(plotOutput("renter_pct")),
                                 box())
                               )
                           ),
@@ -345,6 +357,22 @@ server <- function(input, output) {
       theme(legend.position = "none")
     
     ggplotly(p)
+  })
+  
+  output$renter_pct <- renderPlot({
+    data <- renter_pct %>%
+      filter(puma_name == input$puma)
+    
+    ggplot(data, aes(year, estimate, fill = variable)) +
+      geom_bar(stat = "identity", position = "fill") + 
+      facet_wrap(~puma_name) +
+      theme_minimal() +
+      scale_fill_manual(values = c("owner_pct" = "gray", "renter_pct" = "#1B9E77"), 
+                        name = "Occupant", 
+                        labels = c("owner_pct" = "Owner", "renter_pct" = "Renter")) +
+      scale_x_continuous(breaks= c(2009:2019)) +
+      labs(x = year_lab, y = "Proportion",
+           title = "Occupancy by Renters vs Owners")
   })
   
   
