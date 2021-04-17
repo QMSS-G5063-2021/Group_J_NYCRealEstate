@@ -31,8 +31,8 @@ library(magrittr)
 
 
 #setwd('/Users/Melissa/Desktop/Data Visualization SP21/Group_J_NYCRealEstate/')
-setwd("C:/Users/natal/Desktop/QMSS/Spring 2021/Data_Visualization/project/Group_J_NYCRealEstate/")
-#setwd("G:/My Drive/0 Data Viz/project/Group_J_NYCRealEstate/")
+#setwd("C:/Users/natal/Desktop/QMSS/Spring 2021/Data_Visualization/project/Group_J_NYCRealEstate/")
+setwd("G:/My Drive/0 Data Viz/project/Group_J_NYCRealEstate/")
 
 
 # ------ load data
@@ -51,8 +51,8 @@ pre_puma <- read.csv('construction_data/HousingDB_by_PUMA.csv') # by puma
 pre_post2010 <- read.csv('construction_data/HousingDB_post2010.csv') # detailed
 
 timemachine <- read_csv("time-machine-NLP/TimeMachine.csv")
-df_sentiment <- read_csv("time-machine-NLP/neighborhood_sentiment_scores.csv")
-df_wordcount <- read_csv("time-machine-NLP/wordcount_by_year.csv")
+df_sentiment <- read_csv("time-machine-NLP/neighborhood_sentiment_scores.csv") %>% filter(year >=2009)
+df_wordcount <- read_csv("time-machine-NLP/wordcount_by_year.csv") %>% filter(year >=2009)
 
 # ------ edit variables
 
@@ -451,7 +451,7 @@ ui <- navbarPage("Manhattan Construction",
                             )
                           ),
 ##############
-                 tabPanel("Neighborhood Attributes",
+                 tabPanel("Home Value",
                             mainPanel(
                               fluidRow(
                                   h2("Explore Construction Data with Neighborhood Attributes"),
@@ -513,33 +513,31 @@ ui <- navbarPage("Manhattan Construction",
                               )
                             ))),
                  
-                                         
-                 
-                 
-                 
-                 
+  
                  
   ############           
                  
                  tabPanel("Neighborhoods in Words",
                           mainPanel(
                             fluidRow(
-                              h2("How are neighborhoods described through time?"),
-                              p("The four graphs below show how a Manhattan neighborhood is described from 2010 to 2021. The word cloud comapres the words that are used to describe a neighborhood in 
-                                2010 vs. 2021. The data was collected using the way-back-machine Python API that queries historical versions of a certain webpage stored in Internet Archives."),
-                              
-                              p("Select the year to compare against 2010 below and the number of words to use in the comparison."),
-                              selectInput("nlp_neighborhood",
-                                          label = "Choose Neighborhood:",
-                                          choices = input_neighborhood,
-                                          selected= "Chinatown",
-                                          width = "50%"),
-                              sliderInput( inputId = "nlp_year",
-                                                  label="Choose a Year",
-                                                  value=2019, min=2010, max=2021),
-                              sliderInput("max",
-                                                 "Maximum Number of Words:",
-                                                 min = 50,  max = 300,  value = 100)),
+                              box(
+                                h2("How are neighborhoods described through time?"),
+                                p("The four graphs below show how a Manhattan neighborhood is described from 2010 to 2021. The word cloud comapres the words that are used to describe a neighborhood in 2010 vs. 2021. The data was collected using the way-back-machine Python API that queries historical versions of a certain webpage stored in Internet Archives."),
+                                p("Select the year to compare against 2010 below and the number of words to use in the comparison.")),
+                              box(
+                                selectInput("nlp_neighborhood",
+                                            label = "Choose Neighborhood:",
+                                            choices = input_neighborhood,
+                                            selected= "Chinatown",
+                                            width = "50%"),
+                                sliderInput( inputId = "nlp_year",
+                                                    label="Choose a Year",
+                                                    value=2019, min=2010, max=2021, sep = "", ticks = FALSE),
+                                sliderInput("max",
+                                                   "Maximum Number of Words:",
+                                                   min = 50,  max = 300,  value = 100, ticks = FALSE))),
+                            br(), br(),
+                            
                             fluidRow(
                               column(3,p("Chosen Year"),offset=4),
                               plotOutput("wordcloud"),
@@ -866,6 +864,7 @@ server <- function(input, output) {
   
   output$wiki_edits_through_time <- renderPlotly({
     df = timemachine %>%
+      filter(date >=2009) %>%
       group_by(year, neighborhood) %>%
       summarise(total = n())
     
@@ -873,9 +872,11 @@ server <- function(input, output) {
       ggplot(df, aes(year, total, color=neighborhood)) +
       geom_line(size=1)+
       gghighlight(neighborhood == input$nlp_neighborhood)+
+      scale_x_continuous(breaks= c(2009:2021)) +
       scale_color_manual(values=dark2) + 
       labs(x = "Year", y="Total Number of Wikipedia Page Revisions",
            title="Number of Wikipedia Page Revisions by Year") +
+        
       theme_minimal()
     )
   })
@@ -886,6 +887,7 @@ server <- function(input, output) {
         ggplot(df_sentiment, aes(year, score, color=neighborhood)) +
           geom_line(size=1) + theme_minimal() +
           gghighlight(neighborhood == input$nlp_neighborhood)+
+          scale_x_continuous(breaks= c(2009:2021)) +
           scale_color_manual(values=dark2) + 
           labs(x = "Year", y="Positive/Negative Sentiment Score",
                title="Neighborhood Sentiment Through Time")
@@ -898,6 +900,7 @@ server <- function(input, output) {
       ggplot(df_wordcount, aes(year, count, color=neighborhood)) +
         geom_line(size=1) + theme_minimal() +
         gghighlight(neighborhood == input$nlp_neighborhood)+
+        scale_x_continuous(breaks= c(2009:2021)) +
         scale_color_manual(values=dark2) + 
         labs(x = "Year", y="Median Word Count",
              title="Wikipedia Page Length by Year")
@@ -963,7 +966,7 @@ server <- function(input, output) {
     ggplot(data = subset(x = move_clean, puma_name == "East Harlem"), aes(x="", y=fraction, fill= move_from))+
       geom_bar(width = 1, stat = "identity") +
       theme(axis.line = element_blank() )+
-      scale_fill_manual(values=dark2)+
+      scale_fill_manual(value = dark2) +
       theme_minimal()+
       coord_polar("y", start=0) +
       
