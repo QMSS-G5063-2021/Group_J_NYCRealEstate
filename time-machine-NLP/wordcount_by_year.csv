@@ -1,0 +1,314 @@
+"","neighborhood","year","count"
+"1","Battery Park City",2009,1990
+"2","Battery Park City",2010,2063
+"3","Battery Park City",2011,2083
+"4","Battery Park City",2012,1944
+"5","Battery Park City",2013,2206.5
+"6","Battery Park City",2014,2471
+"7","Battery Park City",2015,3396
+"8","Battery Park City",2016,3537
+"9","Battery Park City",2017,3788
+"10","Battery Park City",2020,5301
+"11","Battery Park City",2021,5304
+"12","Carnegie Hill",2009,767
+"13","Carnegie Hill",2012,689
+"14","Carnegie Hill",2013,690
+"15","Carnegie Hill",2014,709.5
+"16","Carnegie Hill",2015,736
+"17","Carnegie Hill",2016,777
+"18","Chelsea",2009,1513
+"19","Chelsea",2010,1531
+"20","Chelsea",2011,1760
+"21","Chelsea",2012,1668
+"22","Chelsea",2013,1698
+"23","Chelsea",2014,1799
+"24","Chelsea",2015,1905
+"25","Chelsea",2016,2084
+"26","Chelsea",2017,3552.5
+"27","Chelsea",2018,3787
+"28","Chelsea",2019,5085
+"29","Chelsea",2020,5129
+"30","Chelsea",2021,5132
+"31","Chinatown",2009,2606
+"32","Chinatown",2010,2726.5
+"33","Chinatown",2011,3500.5
+"34","Chinatown",2012,4883
+"35","Chinatown",2013,4943
+"36","Chinatown",2014,6015
+"37","Chinatown",2015,6145
+"38","Chinatown",2016,6309
+"39","Chinatown",2017,6458
+"40","Chinatown",2018,6498
+"41","Chinatown",2019,7694
+"42","Chinatown",2020,7774.5
+"43","Chinatown",2021,7692
+"44","Civic Center",2009,268
+"45","Civic Center",2010,272
+"46","Civic Center",2011,300
+"47","Civic Center",2012,2734
+"48","Civic Center",2013,2738.5
+"49","Civic Center",2014,2777
+"50","Civic Center",2015,2938
+"51","Civic Center",2016,2338
+"52","Civic Center",2017,2157
+"53","Civic Center",2018,2165
+"54","Civic Center",2019,2132
+"55","Civic Center",2020,2213
+"56","Civic Center",2021,2273.5
+"57","Clinton",2014,4056
+"58","Clinton",2017,4761
+"59","East Harlem",2009,7670
+"60","East Harlem",2014,2968
+"61","East Harlem",2015,3114
+"62","East Harlem",2016,3264
+"63","East Harlem",2017,3292.5
+"64","East Harlem",2019,4749
+"65","East Harlem",2020,5048
+"66","East Village",2009,3296
+"67","East Village",2010,3338
+"68","East Village",2011,3507
+"69","East Village",2012,3862
+"70","East Village",2013,4187
+"71","East Village",2014,4539
+"72","East Village",2015,5292
+"73","East Village",2016,5278
+"74","East Village",2017,5501.5
+"75","East Village",2018,5498
+"76","East Village",2019,6732
+"77","East Village",2020,7717
+"78","East Village",2021,7766
+"79","Financial District",2009,565
+"80","Financial District",2010,565
+"81","Financial District",2011,574
+"82","Financial District",2012,467
+"83","Financial District",2013,480
+"84","Financial District",2014,538
+"85","Financial District",2015,645
+"86","Financial District",2016,646
+"87","Financial District",2017,675
+"88","Financial District",2018,684
+"89","Financial District",2019,2215
+"90","Financial District",2020,3487
+"91","Financial District",2021,4796
+"92","Flatiron",2006,0
+"93","Flatiron",2017,890.5
+"94","Gramercy",2009,1300
+"95","Gramercy",2010,2070.5
+"96","Gramercy",2011,3148.5
+"97","Gramercy",2012,3005
+"98","Gramercy",2013,3401
+"99","Gramercy",2015,3664
+"100","Gramercy",2016,3665
+"101","Gramercy",2019,4152
+"102","Gramercy",2020,4163.5
+"103","Greenwich Village",2009,3180
+"104","Greenwich Village",2010,3256
+"105","Greenwich Village",2011,3826.5
+"106","Greenwich Village",2012,3871
+"107","Greenwich Village",2014,4740
+"108","Greenwich Village",2015,4817
+"109","Greenwich Village",2016,4841
+"110","Greenwich Village",2017,4868
+"111","Greenwich Village",2019,6235
+"112","Greenwich Village",2020,6272
+"113","Hamilton Heights",2009,704
+"114","Hamilton Heights",2010,702
+"115","Hamilton Heights",2013,739
+"116","Hamilton Heights",2014,726
+"117","Hamilton Heights",2015,731
+"118","Hamilton Heights",2016,731.5
+"119","Hamilton Heights",2017,846
+"120","Hamilton Heights",2018,884
+"121","Hamilton Heights",2019,1939
+"122","Hamilton Heights",2020,2197
+"123","Lincoln Square",2014,145
+"124","Lincoln Square",2015,572
+"125","Lincoln Square",2016,590
+"126","Lincoln Square",2017,715
+"127","Lincoln Square",2018,793.5
+"128","Lincoln Square",2019,837.5
+"129","Lincoln Square",2020,879.5
+"130","Little Italy",2009,431
+"131","Little Italy",2010,452.5
+"132","Little Italy",2011,676
+"133","Little Italy",2012,510
+"134","Little Italy",2013,912
+"135","Little Italy",2014,1030
+"136","Little Italy",2015,1120
+"137","Little Italy",2016,1225
+"138","Little Italy",2017,1314
+"139","Little Italy",2018,1329
+"140","Little Italy",2019,1341
+"141","Little Italy",2020,1327
+"142","Little Italy",2021,1364
+"143","Lower East Side",2009,1869
+"144","Lower East Side",2010,2197.5
+"145","Lower East Side",2011,2492.5
+"146","Lower East Side",2012,2273
+"147","Lower East Side",2013,2350
+"148","Lower East Side",2014,2279
+"149","Lower East Side",2015,2431
+"150","Lower East Side",2016,3329
+"151","Lower East Side",2017,3523
+"152","Lower East Side",2018,3578
+"153","Lower East Side",2019,4865
+"154","Lower East Side",2020,5400
+"155","Lower East Side",2021,5423
+"156","Manhattanville",2009,2495
+"157","Manhattanville",2010,2613
+"158","Manhattanville",2012,2518
+"159","Manhattanville",2014,2372
+"160","Manhattanville",2015,1824
+"161","Manhattanville",2016,1834
+"162","Manhattanville",2017,2016.5
+"163","Manhattanville",2018,2039
+"164","Manhattanville",2019,3113
+"165","Manhattanville",2020,3444
+"166","Midtown",2009,928
+"167","Midtown",2010,1172
+"168","Midtown",2012,1062
+"169","Midtown",2013,1391
+"170","Midtown",2014,1790
+"171","Midtown",2015,1545
+"172","Midtown",2016,1567
+"173","Midtown",2017,1638
+"174","Midtown",2020,3262
+"175","Morningside Heights",2009,1777
+"176","Morningside Heights",2010,1801
+"177","Morningside Heights",2011,1759
+"178","Morningside Heights",2012,1583
+"179","Morningside Heights",2013,1647
+"180","Morningside Heights",2014,1459
+"181","Morningside Heights",2015,1351
+"182","Morningside Heights",2016,1386.5
+"183","Morningside Heights",2017,1524.5
+"184","Morningside Heights",2018,1587
+"185","Morningside Heights",2019,2800
+"186","Morningside Heights",2020,8244
+"187","Morningside Heights",2021,8582
+"188","Murray Hill",2009,1784
+"189","Murray Hill",2010,1951
+"190","Murray Hill",2011,2088
+"191","Murray Hill",2012,1919
+"192","Murray Hill",2013,1917
+"193","Murray Hill",2014,1922
+"194","Murray Hill",2015,1952
+"195","Murray Hill",2016,1952
+"196","Murray Hill",2017,1976
+"197","Murray Hill",2018,2059
+"198","Murray Hill",2019,3832
+"199","Murray Hill",2020,3912
+"200","Murray Hill",2021,3911
+"201","NoHo",2014,778
+"202","NoHo",2015,1386
+"203","NoHo",2016,1389
+"204","NoHo",2017,1398
+"205","NoHo",2018,1537
+"206","NoHo",2019,1580
+"207","NoHo",2020,1843
+"208","Roosevelt Island",2015,3168
+"209","Roosevelt Island",2017,2850
+"210","SoHo",2011,2289
+"211","SoHo",2012,2358
+"212","SoHo",2013,2421
+"213","SoHo",2014,2434
+"214","SoHo",2015,2544
+"215","SoHo",2016,2523
+"216","SoHo",2017,2667
+"217","SoHo",2018,2653
+"218","SoHo",2019,3829
+"219","SoHo",2020,3834
+"220","SoHo",2021,3831
+"221","Sutton Place",2009,878
+"222","Sutton Place",2010,908
+"223","Sutton Place",2011,931
+"224","Sutton Place",2012,821
+"225","Sutton Place",2013,1191
+"226","Sutton Place",2014,1005
+"227","Sutton Place",2015,1008
+"228","Sutton Place",2016,1033
+"229","Sutton Place",2017,1054
+"230","Sutton Place",2018,1054
+"231","Sutton Place",2019,1055
+"232","Sutton Place",2020,1244
+"233","Tribeca",2009,1168
+"234","Tribeca",2011,1383
+"235","Tribeca",2012,1200
+"236","Tribeca",2013,1196
+"237","Tribeca",2014,1263
+"238","Tribeca",2015,1416
+"239","Tribeca",2016,1469
+"240","Tribeca",2017,1460
+"241","Tribeca",2018,2066
+"242","Turtle Bay",2009,671
+"243","Turtle Bay",2010,918.5
+"244","Turtle Bay",2011,1134
+"245","Turtle Bay",2012,967
+"246","Turtle Bay",2013,969
+"247","Turtle Bay",2014,969
+"248","Turtle Bay",2015,1488
+"249","Turtle Bay",2016,1487
+"250","Turtle Bay",2017,1487
+"251","Turtle Bay",2018,1492
+"252","Turtle Bay",2019,2747
+"253","Turtle Bay",2020,2764
+"254","Turtle Bay",2021,2764
+"255","Union Square",2007,1030
+"256","Union Square",2013,2520
+"257","Union Square",2014,2621
+"258","Union Square",2015,2621
+"259","Union Square",2016,2856
+"260","Union Square",2017,3095
+"261","Union Square",2018,3086.5
+"262","Union Square",2019,3001
+"263","Union Square",2020,3588
+"264","Union Square",2021,3588
+"265","Upper East Side",2008,1387
+"266","Upper East Side",2014,2211
+"267","Upper East Side",2015,2216
+"268","Upper East Side",2018,2254
+"269","Upper East Side",2019,3297.5
+"270","Upper East Side",2020,3799
+"271","Upper West Side",2006,0
+"272","Upper West Side",2014,3707
+"273","Upper West Side",2015,3725
+"274","Upper West Side",2019,4368.5
+"275","Upper West Side",2020,4664
+"276","Upper West Side",2021,4661
+"277","Washington Heights",2009,3923
+"278","Washington Heights",2010,4112.5
+"279","Washington Heights",2011,4299
+"280","Washington Heights",2012,4227.5
+"281","Washington Heights",2013,4433
+"282","Washington Heights",2014,4365
+"283","Washington Heights",2015,5888
+"284","Washington Heights",2016,5922
+"285","Washington Heights",2017,6070.5
+"286","Washington Heights",2018,6135
+"287","Washington Heights",2019,7524
+"288","Washington Heights",2020,10984
+"289","Washington Heights",2021,11634
+"290","West Village",2009,579
+"291","West Village",2010,585
+"292","West Village",2011,597
+"293","West Village",2012,444
+"294","West Village",2013,1401
+"295","West Village",2014,1385
+"296","West Village",2015,1345
+"297","West Village",2016,2259
+"298","West Village",2017,2369
+"299","West Village",2019,2652
+"300","West Village",2020,2036
+"301","Yorkville",2009,1185
+"302","Yorkville",2010,1236.5
+"303","Yorkville",2011,1262
+"304","Yorkville",2012,1103
+"305","Yorkville",2013,583
+"306","Yorkville",2014,751
+"307","Yorkville",2015,1453
+"308","Yorkville",2016,1475
+"309","Yorkville",2017,1583
+"310","Yorkville",2018,1587
+"311","Yorkville",2019,1878
+"312","Yorkville",2020,1954
+"313","Yorkville",2021,1946
