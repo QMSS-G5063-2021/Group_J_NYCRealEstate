@@ -42,6 +42,7 @@ pre_post2010 <- read.csv('construction_data/HousingDB_post2010.csv') # detailed
 
 timemachine <- read_csv("time-machine-NLP/TimeMachine.csv")
 df_sentiment <- read_csv("time-machine-NLP/neighborhood_sentiment_scores.csv")
+df_wordcount <- read_csv("time-machine-NLP/wordcount_by_year.csv")
 
 # ------ edit variables
 
@@ -217,17 +218,18 @@ ui <- navbarPage("Manhattan Construction",
                           mainPanel(
                             fluidRow(
                               h2("How are neighborhoods described through time?"),
-                              p("The below compares and contrasts words used to describe a Manhattan neighborhood through two points in time."),
+                              p("The four graphs below show how a Manhattan neighborhood is described from 2010 to 2021. The word cloud comapres the words that are used to describe a neighborhood in 2010 vs. 2021. The data was collected using the way-back-machine Python API that queries historical versions of a certain webpage stored in Internet Archives."),
                               
+                              p("Select the year to compare against 2010 below and the number of words to use in the comparison."),
                               selectInput("nlp_neighborhood",
                                           label = "Choose Neighborhood:",
                                           choices = input_neighborhood,
                                           selected= "Chinatown",
-                                          width = "50%")),
-                            fluidRow(sliderInput( inputId = "nlp_year",
+                                          width = "50%"),
+                              sliderInput( inputId = "nlp_year",
                                                   label="Choose a Year",
                                                   value=2019, min=2010, max=2021),
-                                     sliderInput("max",
+                              sliderInput("max",
                                                  "Maximum Number of Words:",
                                                  min = 50,  max = 300,  value = 100)),
                             fluidRow(
@@ -235,10 +237,13 @@ ui <- navbarPage("Manhattan Construction",
                               plotOutput("wordcloud"),
                               column(3, p("2010"), offset=4)),
                             fluidRow(
-                              plotlyOutput("wiki_edits_through_time")),
+                              p("The below plots show the number of revisions to a neighborhood's wikipedia page through time as well as the sentiment score using a positive/negative dictionary."),
+                              box(plotlyOutput("wiki_edits_through_time")),
+                              box(plotlyOutput("sentiment_score")),
+                              p("")),
                             fluidRow(
-                              column(3),
-                              plotlyOutput("sentiment_score"))
+                              p("The below shows the number of words used to describe a neighbood's wikipedia page through time."),
+                              plotlyOutput("word_count"))
                             )
                           )
 )
@@ -499,6 +504,18 @@ server <- function(input, output) {
           scale_color_manual(values=dark2) + 
           labs(x = "Year", y="Positive/Negative Sentiment Score",
                title="Neighborhood Sentiment Through Time")
+    )
+  })
+  
+  output$word_count <- renderPlotly({
+    
+    ggplotly(
+      ggplot(df_wordcount, aes(year, count, color=neighborhood)) +
+        geom_line(size=1) + theme_minimal() +
+        gghighlight(neighborhood == input$nlp_neighborhood)+
+        scale_color_manual(values=dark2) + 
+        labs(x = "Year", y="Median Word Count",
+             title="Wikipedia Page Length by Year")
     )
   })
 }

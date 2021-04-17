@@ -114,4 +114,28 @@ write.csv(df_sentiment_clean, "neighborhood_sentiment_scores.csv")
 
 ```
 
+
+
+```{r, message=FALSE, warning=FALSE}
+
+word.count <- function(words=c("really great good stuff bad")){
+  require(quanteda)
+  tok <- quanteda::tokens(words)
+  count <- sum(tok[[1]]%in%tok[[1]])
+  count = ifelse(is.na(count), 0, count)
+  return (count)
+}
+
+df_clean$wordcount = lapply(df_clean$text, word.count)
+
+df_wordcount = df_clean %>%
+  group_by(neighborhood, year) %>%
+  unnest(wordcount) %>%
+  summarise(count = median(wordcount))
+
+write.csv(df_wordcount, "wordcount_by_year.csv")
+
+```
+
+
 #
