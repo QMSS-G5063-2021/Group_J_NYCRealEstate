@@ -30,9 +30,9 @@ library(magrittr)
 
 
 
-setwd('/Users/Melissa/Desktop/Data Visualization SP21/Group_J_NYCRealEstate/')
-#setwd("C:/Users/natal/Desktop/QMSS/Spring 2021/Data_Visualization/project/Group_J_NYCRealEstate/")
-setwd("G:/My Drive/0 Data Viz/project/Group_J_NYCRealEstate/")
+#setwd('/Users/Melissa/Desktop/Data Visualization SP21/Group_J_NYCRealEstate/')
+setwd("C:/Users/natal/Desktop/QMSS/Spring 2021/Data_Visualization/project/Group_J_NYCRealEstate/")
+#setwd("G:/My Drive/0 Data Viz/project/Group_J_NYCRealEstate/")
 
 
 # ------ load data
@@ -367,7 +367,7 @@ move_clean <- move %>%
 
 library(dplyr)
 library(car)
-move_clean <- mutate(move_clean_1, variable= recode(variable, "'B07001_017'='No move'"))
+move_clean <- mutate(move_clean, variable= recode(variable, "'B07001_017'='No move'"))
 move_clean <- mutate(move_clean, variable= recode(variable, "'B07001_033'='Same county'"))
 move_clean <- mutate(move_clean, variable= recode(variable, "'B07001_049'='Different county, same state'"))
 move_clean <- mutate(move_clean, variable= recode(variable, "'B07001_065'='Different state'"))
@@ -511,7 +511,7 @@ ui <- navbarPage("Manhattan Construction",
                               box(plotOutput("gender")),
                               box(plotOutput("move"))
                               )
-                            ),
+                            ))),
                  
                                          
                  
