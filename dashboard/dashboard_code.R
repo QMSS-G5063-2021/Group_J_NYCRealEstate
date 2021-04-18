@@ -27,8 +27,8 @@ library(tidyr)
 library(ggraph)
 library(magrittr)
 
-setwd('/Users/Melissa/Desktop/Data Visualization SP21/Group_J_NYCRealEstate/')
-#setwd("C:/Users/natal/Desktop/QMSS/Spring 2021/Data_Visualization/project/Group_J_NYCRealEstate/")
+#setwd('/Users/Melissa/Desktop/Data Visualization SP21/Group_J_NYCRealEstate/')
+setwd("C:/Users/natal/Desktop/QMSS/Spring 2021/Data_Visualization/project/Group_J_NYCRealEstate/")
 #setwd("G:/My Drive/0 Data Viz/project/Group_J_NYCRealEstate/")
 
 
@@ -404,43 +404,6 @@ ui <- navbarPage("Manhattan Construction",
                          box(plotOutput("rent_vs_permit", height = "45vh"), height = "45vh")
                        )
                      )
-
-                   )
-                 ),
-                 
-                 tabPanel("Construction",
-                          mainPanel(
-                            fluidRow(
-                              h2('Construction across Manhattan'),
-                              br(), br(),
-                              h4('Overview of Manhattan Construction'),
-                              p("Some text explaining graphs"),
-                              leafletOutput('const_new_map'),
-                            br(), br(), br(),
-                              
-                              leafletOutput('const_alt_map'),
-                            br(), br(), br(), br()
-                              ),
-                            
-                            fluidRow(
-                              h2('Construction Project Composition by Neighborhood'),
-                              p("The sizes of the boxes represent the volume of new building projects and building alteration projects within each neighborhood group,determined by PUMA.
-                                Over the past 20 years, Chelsea, Clinton, and Midtown have been the neighborhoods with the most new buildings constructed. In that same time range, Battery Park City, Greenwoch Village and
-                                Soho have been the neighborhoods with the most building alteration projects. Given these observations, it could be interesting to investigate the changes in proposed occupancy among both types
-                                of projects."),
-                              box(plotOutput('treemap_nb')),
-                              box(plotOutput('treemap_alt')),
-                            br(), br(), br(), br()
-                              ),
-                            
-                            fluidRow(
-                              br(), br(), br(), br(),
-                              h2('Building Occupancy Transformations'),
-                              p('As a result of the new building and alteration construction projects mentioned above, buildings have often changed occupancy types. Each node represents one of the occupancy types, with the size
-                              determined by the in-degree of each node, as a way to represent the transformations into said occupancy type. It is worth noting that since all new building construction projects start from empty sites,
-                              the in-degree of the empity site node is 0. Across both types of construction projects, transformations into residential and commercial buildings have been the most frequent in the past 20 years.
-                              On the contrary, transformations into educational occupancy buildings have been the least frequent in this time range.'),
-                              box(width = 12, plotOutput('constr_network'))
 
                    ),
   
