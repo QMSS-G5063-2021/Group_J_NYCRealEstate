@@ -27,8 +27,8 @@ library(tidyr)
 library(ggraph)
 library(magrittr)
 
-#setwd('/Users/Melissa/Desktop/Data Visualization SP21/Group_J_NYCRealEstate/')
-setwd("C:/Users/natal/Desktop/QMSS/Spring 2021/Data_Visualization/project/Group_J_NYCRealEstate/")
+setwd('/Users/Melissa/Desktop/Data Visualization SP21/Group_J_NYCRealEstate/')
+#setwd("C:/Users/natal/Desktop/QMSS/Spring 2021/Data_Visualization/project/Group_J_NYCRealEstate/")
 #setwd("G:/My Drive/0 Data Viz/project/Group_J_NYCRealEstate/")
 
 
