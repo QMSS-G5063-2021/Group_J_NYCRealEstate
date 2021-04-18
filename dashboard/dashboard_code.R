@@ -27,10 +27,10 @@ library(tidyr)
 library(ggraph)
 library(magrittr)
 
-setwd('/Users/Melissa/Desktop/Data Visualization SP21/Group_J_NYCRealEstate/')
+#setwd('/Users/Melissa/Desktop/Data Visualization SP21/Group_J_NYCRealEstate/')
 #setwd("C:/Users/natal/Desktop/QMSS/Spring 2021/Data_Visualization/project/Group_J_NYCRealEstate/")
 #setwd("G:/My Drive/0 Data Viz/project/Group_J_NYCRealEstate/")
-
+setwd("~/Documents/GitHub/Group_J_NYCRealEstate/")
 
 ## ---------------------------------------------------- DATA -----------------------------------------
 
@@ -500,6 +500,10 @@ ui <- navbarPage("Manhattan Construction",
                                 The demographics painted a vivid picture of what type of people 
                                 live in and consist of each neighborhood, and how their migration
                                 pattern affects the alteration and progression of city's real estate.
+                                
+                                It is worth noting that the higher the income and the population, and the younger
+                                the population in an neighborhood gets, there is an increased activity 
+                                in new building projects.
                                 "),
                               
                             
@@ -989,7 +993,7 @@ server <- function(input, output) {
         gghighlight(puma_name == input$puma) +
         ggtitle("Neighborhood Median Age Through Years") +
         xlab("Year") + ylab("Median Age")+
-       geom_point()},height = 400, width = 300) 
+       geom_point()}) 
   
   
   output$population <- renderPlot({
@@ -999,12 +1003,12 @@ server <- function(input, output) {
       gghighlight(puma_name == input$puma) +
       ggtitle("Neighborhood Median Population Through Years") +
       xlab("Year") + ylab("Median Population")+
-      geom_point()},height = 400, width = 320) 
+      geom_point()}) 
   
   
-  output$income <- renderPlot({
+  output$income <- renderPlotly({
 
-    ggplot(income_group, aes(x = year, y = median_income, fill = puma_name)) +
+   income_gplot = ggplot(income_group, aes(x = year, y = median_income, fill = puma_name)) +
       geom_area(color = "white", alpha = 0.4) +
       scale_fill_brewer(palette = "Paired") +
       scale_x_continuous(breaks= c(2009:2019)) +
@@ -1019,10 +1023,11 @@ server <- function(input, output) {
       theme(panel.grid.major.x = element_blank(),
             legend.position = "bottom")}, height = 400, width = 580) 
   
+  ggplotly(income_gplot)
   
   output$gender <- renderPlot({
     
-    ggplot(data = subset(x = gender_clean, puma_name == "East Harlem"), aes(x="", y=fraction, fill=gender))+
+    ggplot(data = subset(x = gender_clean, puma_name == input$puma), aes(x="", y=fraction, fill=gender))+
       geom_bar(width = 1, stat = "identity") +
       scale_fill_brewer(palette="dark2")+
       theme_minimal()+
@@ -1038,10 +1043,10 @@ server <- function(input, output) {
   
   output$move <- renderPlot({
     
-    ggplot(data = subset(x = move_clean, puma_name == "East Harlem"), aes(x="", y=fraction, fill= move_from))+
+    ggplot(data = subset(x = move_clean, puma_name == input$puma), aes(x="", y=fraction, fill= move_from))+
       geom_bar(width = 1, stat = "identity") +
       theme(axis.line = element_blank() )+
-      scale_fill_manual(value = dark2) +
+      scale_fill_manual(values = dark2) +
       theme_minimal()+
       coord_polar("y", start=0) +
       
