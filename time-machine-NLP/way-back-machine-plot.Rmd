@@ -138,4 +138,39 @@ write.csv(df_wordcount, "wordcount_by_year.csv")
 ```
 
 
+```{r, message=FALSE, warning=TRUE}
+
+dict = tidytext::sentiments
+pos = dict %>% filter(sentiment == "positive") %>% select(word)
+neg = dict %>% filter(sentiment == "negative") %>% select(word)
+
+top_10_words = df_clean %>%
+  filter(neighborhood=="Chinatown") %>%
+  filter(year == 2020) %>%
+  select(year, clean_text) %>%
+  rename(text=clean_text, doc_id=year)
+
+top_10 = DataframeSource(top_10_words)
+corpus = VCorpus(top_10)
+tdm <- DocumentTermMatrix(corpus)
+tdm = tidy(tdm) %>%
+  filter(term %in% dict[[1]]) %>%
+  mutate(pos.neg = ifelse(term %in% pos[[1]], "positive", "negative"))%>%
+  dplyr::group_by(document, term, pos.neg) %>%
+  summarise(count=median(count)) %>%
+  arrange(desc(count)) %>%
+  head(10)
+
+
+ggplot(tdm, aes(x = reorder(term, count),
+                  y = count, fill = pos.neg)) +
+  geom_bar(stat = "identity") + coord_flip() + theme_minimal() +
+  geom_text(aes(label=count), colour = "white", size = 5, position = position_stack(vjust= 0.75)) +
+  scale_fill_brewer(palette = "Dark2", direction=-1) + 
+  labs(y = "Median Word Usage Frequency", x="Positive/Negative Words",
+       title="Top 10 Positive/Negative Words Used")
+  
+
+```
+
 #

@@ -28,8 +28,8 @@ library(ggraph)
 library(magrittr)
 
 #setwd('/Users/Melissa/Desktop/Data Visualization SP21/Group_J_NYCRealEstate/')
-#setwd("C:/Users/natal/Desktop/QMSS/Spring 2021/Data_Visualization/project/Group_J_NYCRealEstate/")
-setwd("G:/My Drive/0 Data Viz/project/Group_J_NYCRealEstate/")
+setwd("C:/Users/natal/Desktop/QMSS/Spring 2021/Data_Visualization/project/Group_J_NYCRealEstate/")
+# setwd("G:/My Drive/0 Data Viz/project/Group_J_NYCRealEstate/")
 
 
 ## ---------------------------------------------------- DATA -----------------------------------------
@@ -539,17 +539,29 @@ ui <- navbarPage("Manhattan Construction",
                             br(), br(),
                             
                             fluidRow(
-                              column(3,p("Chosen Year"),offset=4),
-                              plotOutput("wordcloud"),
-                              column(3, p("2010"), offset=4)),
+                              column( width=6,
+                                     fluidRow("Chosen Year vs. 2010", style = "height:600px; background-color: white;",
+                                              plotOutput("wordcloud", width = "600px", height="600px"))),
+                              column(width=6,
+                                     fluidRow("Most Used Words to Describe a Neighborhood", 
+                                              plotOutput("word_freq_graph"), style = "height:600px; background-color:white;",
+                                              width="600px", height="600px"))),
+                            br(), br(),
                             fluidRow(
-                              p("The below plots show the number of revisions to a neighborhood's wikipedia page through time as well as the sentiment score using a positive/negative dictionary."),
+                              p(""),
+                              p("The below plots show the number of revisions to a neighborhood's 
+                                wikipedia page through time as well as the sentiment score using a 
+                                positive/negative dictionary."),
                               box(plotlyOutput("wiki_edits_through_time")),
                               box(plotlyOutput("sentiment_score")),
                               p("")),
+                            br(), br(),
                             fluidRow(
-                              p("The below shows the number of words used to describe a neighbood's wikipedia page through time."),
-                              plotlyOutput("word_count"))
+                              p(""),
+                              p("The below shows the number of words used to describe a neighbood's 
+                                wikipedia page through time."),
+                              plotlyOutput("word_count"),
+                              p(""))
                             )
                           )
 )
@@ -867,13 +879,45 @@ server <- function(input, output) {
                                  colors = c(dark2[[1]], dark2[[2]]), title.size=1, max.words=input$max)
   })
   
+  output$word_freq_graph <- renderPlot({
+    dict = tidytext::sentiments
+    pos = dict %>% filter(sentiment == "positive") %>% select(word)
+    neg = dict %>% filter(sentiment == "negative") %>% select(word)
+    
+    top_10_words = timemachine %>%
+      filter(neighborhood==input$nlp_neighborhood) %>%
+      filter(year == input$nlp_year) %>%
+      select(year, clean_text) %>%
+      rename(text=clean_text, doc_id=year)
+    
+    top_10 = DataframeSource(top_10_words)
+    corpus = VCorpus(top_10)
+    tdm <- DocumentTermMatrix(corpus)
+    tdm = tidy(tdm) %>%
+      filter(term %in% dict[[1]]) %>%
+      mutate(pos.neg = ifelse(term %in% pos[[1]], "positive", "negative"))%>%
+      dplyr::group_by(document, term, pos.neg) %>%
+      summarise(count=median(count)) %>%
+      arrange(desc(count)) %>%
+      head(10)
+    
+    ggplot(tdm, aes(x = reorder(term, count),
+                    y = count, fill = pos.neg)) +
+      geom_bar(stat = "identity") + coord_flip() + theme_minimal() +
+      geom_text(aes(label=count), colour = "white", size = 5, position = position_stack(vjust= 0.75)) +
+      scale_fill_brewer(palette = "Dark2", direction=-1) + 
+      labs(y = "Median Word Usage Frequency", x="Positive/Negative Words",
+           title="Top 10 Positive/Negative Words Used")
+    
+  })
+  
   output$wiki_edits_through_time <- renderPlotly({
     df = timemachine %>%
       filter(date >=2009) %>%
       group_by(year, neighborhood) %>%
       summarise(total = n())
     
-    ggplotly(
+    g_wiki = 
       ggplot(df, aes(year, total, color=neighborhood)) +
       geom_line(size=1)+
       gghighlight(neighborhood == input$nlp_neighborhood)+
@@ -881,14 +925,18 @@ server <- function(input, output) {
       scale_color_manual(values=dark2) + 
       labs(x = "Year", y="Total Number of Wikipedia Page Revisions",
            title="Number of Wikipedia Page Revisions by Year") +
-        
       theme_minimal()
-    )
+    
+    ggplotly(g_wiki)
+    style(g_wiki, text = paste(df$neighborhood,
+                               "\n",'Value: ', df$total,
+                               "\n", 'Year: ', df$year))
+    
   })
   
   output$sentiment_score <- renderPlotly({
   
-    ggplotly(
+    g_sentiment = 
         ggplot(df_sentiment, aes(year, score, color=neighborhood)) +
           geom_line(size=1) + theme_minimal() +
           gghighlight(neighborhood == input$nlp_neighborhood)+
@@ -896,12 +944,17 @@ server <- function(input, output) {
           scale_color_manual(values=dark2) + 
           labs(x = "Year", y="Positive/Negative Sentiment Score",
                title="Neighborhood Sentiment Through Time")
-    )
+    
+    ggplotly(g_sentiment)
+    style(g_sentiment, text = paste(df_sentiment$neighborhood,
+                                    "\n",'Value: ', df_sentiment$score,
+                                    "\n", 'Year: ', df_sentiment$year))
+    
   })
   
   output$word_count <- renderPlotly({
     
-    ggplotly(
+    g_wordcount =
       ggplot(df_wordcount, aes(year, count, color=neighborhood)) +
         geom_line(size=1) + theme_minimal() +
         gghighlight(neighborhood == input$nlp_neighborhood)+
@@ -909,7 +962,12 @@ server <- function(input, output) {
         scale_color_manual(values=dark2) + 
         labs(x = "Year", y="Median Word Count",
              title="Wikipedia Page Length by Year")
-    )
+    
+    ggplotly(g_wordcount)
+    style(g_wordcount, text = df_wordcount$neighborhood,
+          "\n", 'Value: ', df_wordcount$count,
+          "\n", 'Year: ', df_wordcount$year)
+
   })
   
   ## ---------------------------------------------------- catherine -----------------------------------------
