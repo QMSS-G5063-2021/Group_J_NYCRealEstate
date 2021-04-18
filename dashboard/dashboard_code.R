@@ -26,6 +26,7 @@ library(stringr)
 library(tidyr)
 library(ggraph)
 library(magrittr)
+library(visNetwork)
 library(rsconnect)
 #rsconnect::deployApp('dashboard/dashboard_code.R')
 
@@ -200,7 +201,9 @@ manhattan_nb <- manhattan %>% filter(Job_Type == 'New Building')
 manhattan_a <- manhattan %>% filter(Job_Type == 'Alteration')
 
 ############################# Treemap Data Wrangling
-font_styling <- list(size = 20)
+font_styling <- list(size = 15)
+colors <- 10
+mycolors <- colorRampPalette(brewer.pal(8, 'Dark2'))(colors)
 
 # Treemap Manhattan New Buildings
 library(treemapify)
@@ -214,7 +217,7 @@ tree_map_newb$Job_Type <- stringr::str_replace(tree_map_newb$Job_Type, 'New Buil
 tree_map_newb$shortened_puma <- sapply(strsplit(tree_map_newb$pumaname10, '- '), tail, 1)
 
 tree_map_newb$wrapped_puma <- sapply(tree_map_newb$shortened_puma, 
-                                     FUN = function(x) {paste(strwrap(x, width = 20), collapse = "<br>")})
+                                     FUN = function(x) {paste(strwrap(x, width = 20), collapse = '<br>')})
 
 # Treemap Manhattan Alterations
 tree_map_alt <- manhattan_a %>% 
@@ -227,9 +230,9 @@ tree_map_alt$shortened_puma <- sapply(strsplit(tree_map_alt$pumaname10, '- '), t
 tree_map_alt$Job_Type <- stringr::str_replace(tree_map_alt$Job_Type , 'Alteration', 'Alterations')
 
 tree_map_alt$wrapped_puma <- sapply(tree_map_alt$shortened_puma, 
-                                    FUN = function(x) {paste(strwrap(x, width = 20), collapse = "<br>")})
+                                    FUN = function(x) {paste(strwrap(x, width = 20), collapse = '<br>')})
 
-############################# Network Data Wrangling
+############################# Interactive Network Data Wrangling
 trans_types <- manhattan %>% 
   select(transformation_type, PermitYear) %>%
   group_by(transformation_type) %>% count(PermitYear) %>%
@@ -245,11 +248,6 @@ trans_types <- trans_types %>% select(from, to, count_type, PermitYear, transfor
 # Create vertex dataframe
 trans_types_vertices <- unique(trans_types[,1]) %>% as.data.frame()
 colnames(trans_types_vertices)[1] <- 'occupancy_type'  
-
-# Create network object
-g <- graph_from_data_frame(trans_types, directed = TRUE, vertices = trans_types_vertices) %>% tidygraph::as_tbl_graph()
-
-V(g)$vertex_indegree <- degree(g, mode = 'in')
 
 ## ---------------------------------------------------- melissa end -------------------------------------
 
@@ -424,7 +422,17 @@ ui <- navbarPage("Manhattan Construction",
                                 h2('Construction across Manhattan'),
                                 br(), br(),
                                 h4('Overview of Manhattan Construction'),
-                                p('Some text explaining graphs'),
+                                p('Within the past 20 years, there have been many types of construction projects within Manhattan. Judging by the maps, some of the highest 
+                                  concentrations of new buildings has occured in areas other than Midtown. This is not surprising since Midtown is congested with lots of
+                                  buildings, without many empty sites on which to build. On the other hand, many of the building alteration projeects have occurred within
+                                  Midtown, where offices may be converted into other occupancy types.'),
+                                br(),
+                                p('The interactive maps below show the precise locations of permits for new building projects and building alteration projects within 
+                                  the past 20 years. Permit year, as opposed to completion year, is used in an effort to better illustrate project intention. For ease of use
+                                  the permit years are separated into 5 groups- one for permits dated 2000 to 2004, one for those dated 2005 to 2009, one for those dated 
+                                  2010-2014, one for those dated 2015-2019, and finally one for those dated 2020 to preset. The map uses clustering to make it easier to
+                                  see high concentrations of projects in certain areas when zoomed out. This ability to zoom in and out allows for precise location tracking.'),
+                                  
                                 leafletOutput('const_new_map'),
                                 br(), br(), br(),
                                 
@@ -433,29 +441,35 @@ ui <- navbarPage("Manhattan Construction",
                               ),
                               
                               fluidRow(
-                                h2('Construction Project Composition by Neighborhood'),
+                                h4('Construction Project Composition by Neighborhood'),
+                                p('Over the past 20 years, Chelsea, Clinton, and Midtown have been the neighborhoods with the most new buildings constructed. 
+                                   In that same time range, Battery Park City, Greenwich Village and Soho have been the neighborhoods with the most building alteration projects. 
+                                   Given these observations, it could be interesting to investigate the changes in intended occupancies among both types of projects.'),
+                                br(),
                                 p('The interactive tree maps below allow for comparison of construction projects among neighborhood groups, as determined by PUMA. 
                                    The sizes of the boxes represent the volume of new building projects or building alteration projects within each neighborhood group.
-                                   Over the past 20 years, Chelsea, Clinton, and Midtown have been the neighborhoods with the most new buildings constructed. 
-                                   In that same time range, Battery Park City, Greenwoch Village and Soho have been the neighborhoods with the most building alteration projects. 
-                                   Given these observations, it could be interesting to investigate the changes in proposed occupancy among both types of projects.'),
-                                br(), br(), br(),
+                                   Hovering over a box will display the number of projects specifically within that neighborhood group.'),
+                                br(),   
                                 box(plotlyOutput('treemap_newb_int')),
                                 box(plotlyOutput('treemap_alt_int')),
                                 br(), br(), br(), br(),
                               ),
                               
                               fluidRow(
-                                br(), br(), br(), br(),
-                                h2('Building Occupancy Transformations'),
+                                h4('Building Occupancy Transformations'),
                                 p('As a result of the new building and alteration construction projects mentioned above, buildings have often changed occupancy types. 
                                    Each node represents one of the occupancy types, with the size determined by the in-degree of each node, as a way to represent 
                                    the transformations into said occupancy type. It is worth noting that since all new building construction projects start from empty sites,
                                    the in-degree of the empity site node is 0. Across both types of construction projects, transformations into residential and commercial 
                                    buildings have been the most frequent in the past 20 years.On the contrary, transformations into educational occupancy buildings have 
                                    been the least frequent in this time range.'),
-                                  
-                                box(width = 12, plotOutput('constr_network'))
+                                br(), 
+                                p('In the interactive directed network graph below, each node represents a building occupancy type and is labeled as such. Hovering over a node will
+                                  display a pop-up which indicates the number of projects in which a building was transformed into the occupancy type of that node. This is
+                                  determined by the in-degree of each node, with the direction being dictated by the edge arrows. Clicking on a node will better highlight its 
+                                  connections with other nodes, and dragging and/or rearranging the nodes can reveal additional node relationships.'),
+                                br(), br(), br(),
+                                visNetworkOutput('constr_network')
                               )
                             )
                    ),
@@ -811,6 +825,7 @@ server <- function(input, output) {
   })
 
 ########## Interactive Treemaps   
+  # New Buildings
   output$treemap_newb_int <- renderPlotly({
     tree_map_nb_int <- plot_ly(
       tree_map_newb,
@@ -822,9 +837,11 @@ server <- function(input, output) {
       hovertemplate = "PUMA Neighborhood: %{label}<br>Project Count: %{value}<extra></extra>") %>%
       config(
         displaylogo = FALSE) %>%
-      layout(title = 'Volume of New Building Projects\n 2000 - Present', colorway = mycolors, 
+      layout(title = 'Volume of New Building Projects\n 2000 - Present', 
+             colorway = mycolors, 
              font = font_styling)
     
+    # Alterations
     tree_map_nb_int
   })  
   
@@ -839,33 +856,36 @@ server <- function(input, output) {
       hovertemplate = "PUMA Neighborhood: %{label}<br>Project Count: %{value}<extra></extra>") %>%
       config(
         displaylogo = FALSE) %>%
-      layout(title = 'Volume of New Building Projects\n 2000 - Present', colorway = mycolors, 
+      layout(title = 'Volume of Building Alteration Projects\n 2000 - Present', 
+             colorway = mycolors, 
              font = font_styling)
     
     tree_map_alt_int
   })  
  
-########## Interactive Treemaps   
-  output$constr_network <- renderPlot({
-    ###### Arrow Edges- circle layout
-    network_g <- ggraph(g, layout = 'circle') +
-      geom_edge_link(arrow = arrow(length = unit(4, 'mm')), end_cap = circle(2, 'mm'), alpha = 1, width = 0.7, color = 'azure4', check_overlap = TRUE) +
-      geom_node_point(color = 'black', shape = 21, aes(fill = as.factor(name), size = vertex_indegree), show.legend = TRUE) +
-      geom_node_text(aes(label = name), color = 'black', vjust = 1.5, show.legend = FALSE, size = 5, check_overlap = TRUE) +
-      ggtitle('Building Occupancy Transformations in Manhattan Construction\n 2000 - Present') +
-      theme(legend.key = element_rect(fill = 'white', color = 'black'), 
-            legend.title = element_text(face = 'bold', size = 15),
-            legend.position = 'right',
-            legend.text = element_text(size = 15),
-            plot.title.position = 'plot',
-            plot.title = element_text(hjust = 0.5)) +
-      scale_fill_brewer(name = 'Building Occupancy Type', palette = 'Dark2') +
-      scale_size_continuous(name = 'Count of Transformations\n represented by in-degree', 
-                            labels = c('previous building transformed into (node) 0 times',
-                                       'previous building transformed into (node) 20 times',
-                                       'previous building transformed into (node) 40 times',
-                                       'previous building transformed into (node) 60 times'))
+########## Interactive Network  
+  output$constr_network <- renderVisNetwork({
+
+      nodes <- data.frame(id = trans_types_vertices$occupancy_type,
+                          label = trans_types_vertices$occupancy_type,
+                          color = c("#1B9E77", "#666666","#A16864", "#9B58A5", "#D8367D", "#749829", "#BBA90B", "#97722D"))
     
+      edges <- data.frame(from = trans_types$from, 
+                          to = trans_types$to, 
+                          arrows = c("to"),
+                          label.family = 'Arial')
+    
+      graph <- graph.data.frame(edges, directed = T)
+      degree_value <- degree(graph, mode = "in")
+      nodes$value <- degree_value[match(nodes$id, names(degree_value))]
+      nodes$title <- paste0(nodes$value, ' building(s)<br>were transformed into<br>', nodes$label, ' Occupancy')
+    
+      network_g <- visNetwork(nodes, edges, main = list(text = 'Building Occupancy Type Transformations in Manhattan Construction',
+                                                      style = 'font-family:Arial; color: black; font-size:20px; text-align:center;'),
+                                          submain = list(text = '2000 to Present',
+                                                         style = 'font-family:Arial; color: black; font-size:20px; text-align:center;')) %>%
+                                          visIgraphLayout(layout = 'layout_in_circle') %>% 
+                                          visLayout(randomSeed = 13)
     network_g
   })
   
