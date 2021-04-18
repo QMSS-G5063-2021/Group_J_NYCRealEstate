@@ -198,8 +198,7 @@ manhattan_nb <- manhattan %>% filter(Job_Type == 'New Building')
 manhattan_a <- manhattan %>% filter(Job_Type == 'Alteration')
 
 ############################# Treemap Data Wrangling
-colors <- 10
-mycolors <- colorRampPalette(brewer.pal(8, 'Dark2'))(colors)
+font_styling <- list(size = 20)
 
 # Treemap Manhattan New Buildings
 library(treemapify)
@@ -212,6 +211,9 @@ colnames(tree_map_newb)[3] <- 'project_count'
 tree_map_newb$Job_Type <- stringr::str_replace(tree_map_newb$Job_Type, 'New Building', 'New Buildings')
 tree_map_newb$shortened_puma <- sapply(strsplit(tree_map_newb$pumaname10, '- '), tail, 1)
 
+tree_map_newb$wrapped_puma <- sapply(tree_map_newb$shortened_puma, 
+                                     FUN = function(x) {paste(strwrap(x, width = 20), collapse = "<br>")})
+
 # Treemap Manhattan Alterations
 tree_map_alt <- manhattan_a %>% 
   select(pumaname10, Job_Type) %>%
@@ -221,6 +223,9 @@ tree_map_alt <- manhattan_a %>%
 colnames(tree_map_alt)[3] <- 'project_count' 
 tree_map_alt$shortened_puma <- sapply(strsplit(tree_map_alt$pumaname10, '- '), tail, 1)
 tree_map_alt$Job_Type <- stringr::str_replace(tree_map_alt$Job_Type , 'Alteration', 'Alterations')
+
+tree_map_alt$wrapped_puma <- sapply(tree_map_alt$shortened_puma, 
+                                    FUN = function(x) {paste(strwrap(x, width = 20), collapse = "<br>")})
 
 ############################# Network Data Wrangling
 trans_types <- manhattan %>% 
@@ -427,22 +432,27 @@ ui <- navbarPage("Manhattan Construction",
                               
                               fluidRow(
                                 h2('Construction Project Composition by Neighborhood'),
-                                p("The sizes of the boxes represent the volume of new building projects and building alteration projects within each neighborhood group,determined by PUMA.
-                                Over the past 20 years, Chelsea, Clinton, and Midtown have been the neighborhoods with the most new buildings constructed. In that same time range, Battery Park City, Greenwoch Village and
-                                Soho have been the neighborhoods with the most building alteration projects. Given these observations, it could be interesting to investigate the changes in proposed occupancy among both types
-                                of projects."),
-                                box(plotOutput('treemap_nb')),
-                                box(plotOutput('treemap_alt')),
-                                br(), br(), br(), br()
+                                p('The interactive tree maps below allow for comparison of construction projects among neighborhood groups, as determined by PUMA. 
+                                   The sizes of the boxes represent the volume of new building projects or building alteration projects within each neighborhood group.
+                                   Over the past 20 years, Chelsea, Clinton, and Midtown have been the neighborhoods with the most new buildings constructed. 
+                                   In that same time range, Battery Park City, Greenwoch Village and Soho have been the neighborhoods with the most building alteration projects. 
+                                   Given these observations, it could be interesting to investigate the changes in proposed occupancy among both types of projects.'),
+                                br(), br(), br(),
+                                box(plotlyOutput('treemap_newb_int')),
+                                box(plotlyOutput('treemap_alt_int')),
+                                br(), br(), br(), br(),
                               ),
                               
                               fluidRow(
                                 br(), br(), br(), br(),
                                 h2('Building Occupancy Transformations'),
-                                p('As a result of the new building and alteration construction projects mentioned above, buildings have often changed occupancy types. Each node represents one of the occupancy types, with the size
-                              determined by the in-degree of each node, as a way to represent the transformations into said occupancy type. It is worth noting that since all new building construction projects start from empty sites,
-                              the in-degree of the empity site node is 0. Across both types of construction projects, transformations into residential and commercial buildings have been the most frequent in the past 20 years.
-                              On the contrary, transformations into educational occupancy buildings have been the least frequent in this time range.'),
+                                p('As a result of the new building and alteration construction projects mentioned above, buildings have often changed occupancy types. 
+                                   Each node represents one of the occupancy types, with the size determined by the in-degree of each node, as a way to represent 
+                                   the transformations into said occupancy type. It is worth noting that since all new building construction projects start from empty sites,
+                                   the in-degree of the empity site node is 0. Across both types of construction projects, transformations into residential and commercial 
+                                   buildings have been the most frequent in the past 20 years.On the contrary, transformations into educational occupancy buildings have 
+                                   been the least frequent in this time range.'),
+                                  
                                 box(width = 12, plotOutput('constr_network'))
                               )
                             )
@@ -793,49 +803,43 @@ server <- function(input, output) {
     
     manhattan_alt_map
   })
-  
-  output$treemap_nb <- renderPlot({
-    # Treemap: New Buildings
-    newb_tree_map <- ggplot(tree_map_newb, aes(area = project_count, fill = shortened_puma, subgroup = Job_Type, label = shortened_puma)) +
-      geom_treemap() +
-      geom_treemap_subgroup_border(colour = 'black') +
-      geom_treemap_subgroup_text(fontface = 'bold', color = '#f0f0f0', alpha = 0.7, place = 'bottomleft') +
-      geom_treemap_text(colour = 'white', place = 'center', reflow = TRUE) +
-      scale_fill_manual(values = mycolors) +
-      labs(title = 'Volume of New Building Projects',
-           subtitle = '2000 - Present',
-           x = NULL, 
-           y = NULL, 
-           fill = NULL) +
-      theme_minimal() +
-      theme(plot.title = element_text(hjust = 0.5)) +
-      theme(plot.subtitle = element_text(hjust = 0.5)) +
-      theme(legend.position = 'none')
+
+########## Interactive Treemaps   
+  output$treemap_newb_int <- renderPlotly({
+    tree_map_nb_int <- plot_ly(
+      tree_map_newb,
+      labels = ~ wrapped_puma,
+      parents = NA,
+      values = ~ project_count,
+      type = 'treemap',
+      textposition = 'middle center',
+      hovertemplate = "PUMA Neighborhood: %{label}<br>Project Count: %{value}<extra></extra>") %>%
+      config(
+        displaylogo = FALSE) %>%
+      layout(title = 'Volume of New Building Projects\n 2000 - Present', colorway = mycolors, 
+             font = font_styling)
     
-    newb_tree_map
-  })
+    tree_map_nb_int
+  })  
   
-  output$treemap_alt <- renderPlot({
-    # Treemap: Alterations
-    alt_tree_map <- ggplot(tree_map_alt, aes(area = project_count, fill = shortened_puma, subgroup = Job_Type, label = shortened_puma)) +
-      geom_treemap() +
-      geom_treemap_subgroup_border(colour = 'black') +
-      geom_treemap_subgroup_text(fontface = 'bold', color = '#f0f0f0', alpha = 0.7, place = 'bottomleft') +
-      geom_treemap_text(colour = 'white', place = 'center', reflow = TRUE) +
-      scale_fill_manual(values = mycolors) +
-      labs(title = 'Volume of Building Alteration Projects',
-           subtitle = '2000 - Present',
-           x = NULL, 
-           y = NULL, 
-           fill = NULL) +
-      theme_minimal() +
-      theme(plot.title = element_text(hjust = 0.5)) +
-      theme(plot.subtitle = element_text(hjust = 0.5)) +
-      theme(legend.position = 'none')
+  output$treemap_alt_int <- renderPlotly({ 
+    tree_map_alt_int <- plot_ly(
+      tree_map_alt,
+      labels = ~ wrapped_puma,
+      parents = NA,
+      values = ~ project_count,
+      type = 'treemap',
+      textposition = 'middle center',
+      hovertemplate = "PUMA Neighborhood: %{label}<br>Project Count: %{value}<extra></extra>") %>%
+      config(
+        displaylogo = FALSE) %>%
+      layout(title = 'Volume of New Building Projects\n 2000 - Present', colorway = mycolors, 
+             font = font_styling)
     
-    alt_tree_map
-  })   
-  
+    tree_map_alt_int
+  })  
+ 
+########## Interactive Treemaps   
   output$constr_network <- renderPlot({
     ###### Arrow Edges- circle layout
     network_g <- ggraph(g, layout = 'circle') +
