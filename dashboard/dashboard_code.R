@@ -27,6 +27,8 @@ library(tidyr)
 library(ggraph)
 library(magrittr)
 library(visNetwork)
+library(rsconnect)
+#rsconnect::deployApp('dashboard/dashboard_code.R')
 
 setwd('/Users/Melissa/Desktop/Data Visualization SP21/Group_J_NYCRealEstate/')
 #setwd("C:/Users/natal/Desktop/QMSS/Spring 2021/Data_Visualization/project/Group_J_NYCRealEstate/")
@@ -487,6 +489,7 @@ ui <- navbarPage("Manhattan Construction",
                                               choices = input_puma,
                                               selected = "Upper West Side & West Side",
                                               width = "50%"))),
+                              br(), br(),
 
                               fluidRow(
                                 box(plotlyOutput("res_new_permit")),
@@ -498,7 +501,7 @@ ui <- navbarPage("Manhattan Construction",
                                 box(plotlyOutput("home_value"))),
                               
                               fluidRow(
-                                box(plotOutput("renter_pct")),
+                                box(plotlyOutput("renter_pct")),
                                 box())
                               )
                           ),
@@ -716,11 +719,11 @@ server <- function(input, output) {
                           'Value: ',data$permit_count))
   })
   
-  output$renter_pct <- renderPlot({
+  output$renter_pct <- renderPlotly({
     data <- renter_pct %>%
       filter(puma_name == input$puma)
     
-    ggplot(data, aes(year, estimate, fill = variable)) +
+    p <- ggplot(data, aes(year, estimate, fill = variable)) +
       geom_bar(stat = "identity", position = "fill") + 
       facet_wrap(~puma_name) +
       theme_minimal() +
@@ -729,10 +732,13 @@ server <- function(input, output) {
                         labels = c("owner_pct" = "Owner", "renter_pct" = "Renter")) +
       scale_x_continuous(breaks= c(2009:2019)) +
       labs(x = year_lab, y = "Proportion",
-           title = "Occupancy by Renters vs Owners")
+           title = "Occupancy by Renters vs Owners") +
+      theme(legend.position = "bottom")
     
-    # style(p, text = paste(data$puma_name,"\n",
-    #                       'Value: ',data$permit_count))
+    ggplotly(p)
+    
+    style(p, text = paste("Owner Proportion: ",round(data[data$variable == "owner_pct", ]$estimate, digits = 3),"\n",
+                          "Renter Proportion: ",round(data[data$variable == "renter_pct", ]$estimate, digits = 3)))
   })
   
 
