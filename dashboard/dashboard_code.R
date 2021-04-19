@@ -1014,12 +1014,13 @@ server <- function(input, output) {
   
   output$median_age <- renderPlot({
     
-      ggplot(mean_group, aes(as.factor(year), median_age, colour=puma_name)) + 
-        geom_line(aes(group = puma_name)) + 
-        gghighlight(puma_name == input$puma) +
-        ggtitle("Neighborhood Median Age Through Years") +
-        xlab("Year") + ylab("Median Age")+
-       geom_point()}) 
+    ggplot(mean_group, aes(as.factor(year), median_age, colour=puma_name)) + 
+      geom_line(aes(group = puma_name)) + 
+      scale_color_manual(values = dark2) +
+      gghighlight(puma_name == input$puma) +
+      ggtitle("Neighborhood Median Age Through Years") +
+      xlab("Year") + ylab("Median Age")+
+      geom_point()}) 
   
   
   output$population <- renderPlot({
@@ -1027,18 +1028,19 @@ server <- function(input, output) {
     ggplot(pop_group, aes(as.factor(year), median_population, colour=puma_name)) + 
       geom_line(aes(group = puma_name)) + 
       gghighlight(puma_name == input$puma) +
+      scale_color_manual(values = dark2) +
       ggtitle("Neighborhood Median Population Through Years") +
       xlab("Year") + ylab("Median Population")+
       geom_point()}) 
   
   
-  output$income <- renderPlotly({
-
-   income_gplot = ggplot(income_group, aes(x = year, y = median_income, fill = puma_name)) +
+  output$income <- renderPlot({
+    
+    ggplot(income_group, aes(x = year, y = median_income, fill = puma_name)) +
       geom_area(color = "white", alpha = 0.4) +
-      scale_fill_brewer(palette = "Paired") +
+      scale_fill_manual(values = dark2) +
       scale_x_continuous(breaks= c(2009:2019)) +
-     # gghighlight(puma_name == input$puma) +
+      # gghighlight(puma_name == input$puma) +
       scale_y_continuous(expand = c(0, 0), labels = scales::dollar) +
       labs(title = "",
            subtitle = "Median Household Income by Neighborhood, 2009-2019",
@@ -1047,25 +1049,24 @@ server <- function(input, output) {
            y = "Median Household Income ($)",
            fill = NULL) +
       theme(panel.grid.major.x = element_blank(),
-            legend.position = "bottom")}, height = 400, width = 580) 
+            legend.position = "right")}, height = 400, width = 800) 
   
-  ggplotly(income_gplot)
+  
   
   output$gender <- renderPlot({
     
     ggplot(data = subset(x = gender_clean, puma_name == input$puma), aes(x="", y=fraction, fill=gender))+
       geom_bar(width = 1, stat = "identity") +
-      scale_fill_brewer(palette="dark2")+
+      scale_fill_manual(values = dark2)+
       theme_minimal()+
       theme(legend.key.size = unit(0.3, "cm"),
             legend.margin = margin(0.5, 10, 0.5, 10))+
       coord_polar("y", start=0)+
-          labs(fill="gender",
-                     x=NULL,
-                     y=NULL, 
-                     title="Gender Distribution",
-                     caption="Source: ACS")}) 
-  
+      labs(fill="gender",
+           x=NULL,
+           y=NULL, 
+           title="Gender Distribution",
+           caption="Source: ACS")}) 
   
   output$move <- renderPlot({
     
