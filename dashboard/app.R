@@ -27,12 +27,12 @@ library(tidyr)
 library(ggraph)
 library(magrittr)
 library(visNetwork)
-library(rsconnect)
+#library(rsconnect)
 #rsconnect::deployApp('dashboard/dashboard_code.R')
 
-#setwd('/Users/Melissa/Desktop/Data Visualization SP21/Group_J_NYCRealEstate/')
+setwd('/Users/Melissa/Desktop/Data Visualization SP21/Group_J_NYCRealEstate/dashboard/')
 #setwd("C:/Users/natal/Desktop/QMSS/Spring 2021/Data_Visualization/project/Group_J_NYCRealEstate/dashboard/")
-setwd("G:/My Drive/0 Data Viz/project/Group_J_NYCRealEstate/dashboard/")
+#setwd("G:/My Drive/0 Data Viz/project/Group_J_NYCRealEstate/dashboard/")
 #setwd("~/Documents/GitHub/Group_J_NYCRealEstate/")
 
 ## ---------------------------------------------------- DATA -----------------------------------------
@@ -201,7 +201,7 @@ manhattan_nb <- manhattan %>% filter(Job_Type == 'New Building')
 manhattan_a <- manhattan %>% filter(Job_Type == 'Alteration')
 
 ############################# Treemap Data Wrangling
-font_styling <- list(size = 15)
+font_styling <- list(size = 12, family = 'Arial')
 colors <- 10
 mycolors <- colorRampPalette(brewer.pal(8, 'Dark2'))(colors)
 
@@ -424,53 +424,56 @@ ui <- navbarPage("Manhattan Construction",
                               h2('Construction across Manhattan'),
                               br(), br(),
                               h4('Overview of Manhattan Construction'),
-                              p('Within the past 20 years, there have been many types of construction projects within Manhattan. Judging by the maps, some of the highest 
-                                  concentrations of new buildings has occured in areas other than Midtown. This is not surprising since Midtown is congested with lots of
-                                  buildings, without many empty sites on which to build. On the other hand, many of the building alteration projeects have occurred within
-                                  Midtown, where offices may be converted into other occupancy types.'),
+                              h5('Within the past 20 years, there have been many types of construction projects within Manhattan. Judging by the maps, some of the highest 
+                                  concentrations of new building projects have occurred in areas other than Midtown. This is not surprising since Midtown is already congested 
+                                  with lots of buildings, without many empty sites on which to build. However, Midtown has seen a fair amount of building alteration projects, 
+                                  implying that changes in building occupancy types may be a large motivation in these project decisions.'),
                               br(),
-                              p('The interactive maps below show the precise locations of permits for new building projects and building alteration projects within 
+                              h5('The interactive maps below show the precise locations of permits for new building projects and building alteration projects within 
                                   the past 20 years. Permit year, as opposed to completion year, is used in an effort to better illustrate project intention. For ease of use
                                   the permit years are separated into 5 groups- one for permits dated 2000 to 2004, one for those dated 2005 to 2009, one for those dated 
-                                  2010-2014, one for those dated 2015-2019, and finally one for those dated 2020 to preset. The map uses clustering to make it easier to
+                                  2010 to 2014, one for those dated 2015 to 2019, and finally one for those dated 2020 to present. The map uses clustering to make it easier to
                                   see high concentrations of projects in certain areas when zoomed out. This ability to zoom in and out allows for precise location tracking.'),
                               
                               leafletOutput('const_new_map'),
                               br(), br(), br(),
                               
                               leafletOutput('const_alt_map'),
-                              br(), br(), br(), br()
+                              br(), br(), br(),
                             ),
                             
                             fluidRow(
                               h4('Construction Project Composition by Neighborhood'),
-                              p('Over the past 20 years, Chelsea, Clinton, and Midtown have been the neighborhoods with the most new buildings constructed. 
-                                   In that same time range, Battery Park City, Greenwich Village and Soho have been the neighborhoods with the most building alteration projects. 
-                                   Given these observations, it could be interesting to investigate the changes in intended occupancies among both types of projects.'),
+                              h5('Over the past 20 years, neighborhood groups (dictated by PUMA) on the West Side of Manhattan have seen some of the highest volume of new 
+                                 building projects. With the exception of Harlem neighborhoods, the neighborhood groups in the Upper parts of Manhattan have seen the 
+                                 lowest volume of new building projects. It is harder to detect a pattern within new building alterations, as there are a wide variety
+                                 of these projects in many neighborhoods. Given these observations, it could be interesting to investigate the changes in intended occupancies
+                                 among both types of projects.'),
                               br(),
-                              p('The interactive tree maps below allow for comparison of construction projects among neighborhood groups, as determined by PUMA. 
+                              h5('The interactive tree maps below allow for comparison of construction projects among neighborhood groups, as determined by PUMA. 
                                    The sizes of the boxes represent the volume of new building projects or building alteration projects within each neighborhood group.
                                    Hovering over a box will display the number of projects specifically within that neighborhood group.'),
                               br(),   
                               box(plotlyOutput('treemap_newb_int')),
                               box(plotlyOutput('treemap_alt_int')),
-                              br(), br(), br(), br(),
+                              br(), br(), br(), 
                             ),
                             
                             fluidRow(
                               h4('Building Occupancy Transformations'),
-                              p('As a result of the new building and alteration construction projects mentioned above, buildings have often changed occupancy types. 
-                                   Each node represents one of the occupancy types, with the size determined by the in-degree of each node, as a way to represent 
-                                   the transformations into said occupancy type. It is worth noting that since all new building construction projects start from empty sites,
-                                   the in-degree of the empity site node is 0. Across both types of construction projects, transformations into residential and commercial 
-                                   buildings have been the most frequent in the past 20 years.On the contrary, transformations into educational occupancy buildings have 
-                                   been the least frequent in this time range.'),
+                              h5('As a result of the new building and building alteration projects mentioned above,it is not uncommon for buildings in Manhattan to change
+                                 ccupancy types. Each node represents one of the occupancy types, with the size determined by the in-degree of each node, as a way to
+                                 represent the transformations into said occupancy type. It is worth noting that since all new building construction projects start from
+                                 empty sites, the in-degree of the empity site node is 0. Across both types of construction projects, transformations into residential 
+                                 and commercial buildings have been the most frequent in the past 20 years. On the contrary, transformations into educational occupancy 
+                                 buildings have been the least frequent in this time range. Given the changes that COVID-19 has inflicted upon office buildings, it could
+                                 be interesting to see how the building alteration trend evolves.'),
                               br(), 
-                              p('In the interactive directed network graph below, each node represents a building occupancy type and is labeled as such. Hovering over a node will
+                              h5('In the interactive directed network graph below, each node represents a building occupancy type and is labeled as such. Hovering over a node will
                                   display a pop-up which indicates the number of projects in which a building was transformed into the occupancy type of that node. This is
                                   determined by the in-degree of each node, with the direction being dictated by the edge arrows. Clicking on a node will better highlight its 
                                   connections with other nodes, and dragging and/or rearranging the nodes can reveal additional node relationships.'),
-                              br(), br(), br(),
+                              br(), br(),
                               visNetworkOutput('constr_network')
                             )
                           )
@@ -759,7 +762,7 @@ server <- function(input, output) {
                             'PUMA:',manhattan_nb$PUMA2010,'<br/>')
     # Map Title
     map_title1 <- tags$p(tags$style('p {color: black; font-size: 20px}'),
-                         tags$b('Construction Across NYC\n New Buildings'))
+                         tags$b('Construction in Manhattan: \n New Buildings'))
     
     # Color Palette 1 for the Map: Job Permit Year Group
     pal1 = colorFactor('Dark2', domain = manhattan_nb$permit_yr_group) 
@@ -800,7 +803,7 @@ server <- function(input, output) {
     
     # Map Title
     map_title2 <- tags$p(tags$style('p {color: black; font-size: 20px}'),
-                         tags$b('Construction Across NYC\n Building Alterations'))
+                         tags$b('Construction in Manhattan: \n Building Alterations'))
     
     # Color Palette 2 for the Map: Job Permit Year
     pal2 = colorFactor('Dark2', domain = manhattan_a$permit_yr_group) 
@@ -843,7 +846,7 @@ server <- function(input, output) {
       hovertemplate = "PUMA Neighborhood: %{label}<br>Project Count: %{value}<extra></extra>") %>%
       config(
         displaylogo = FALSE) %>%
-      layout(title = 'Volume of New Building Projects\n 2000 - Present', 
+      layout(title = 'Volume of New Buildings', 
              colorway = mycolors, 
              font = font_styling)
     
@@ -862,7 +865,7 @@ server <- function(input, output) {
       hovertemplate = "PUMA Neighborhood: %{label}<br>Project Count: %{value}<extra></extra>") %>%
       config(
         displaylogo = FALSE) %>%
-      layout(title = 'Volume of Building Alteration Projects\n 2000 - Present', 
+      layout(title = 'Volume of Building Alterations', 
              colorway = mycolors, 
              font = font_styling)
     
