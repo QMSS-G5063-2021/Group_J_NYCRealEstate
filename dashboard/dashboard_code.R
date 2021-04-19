@@ -484,7 +484,7 @@ ui <- navbarPage("Manhattan Construction",
                                   p("Some text explaining graphs")),
                                 
                                 box(
-                                  selectInput("puma",
+                                  selectInput("puma_homevalue",
                                               label = "Choose Neighborhood:",
                                               choices = input_puma,
                                               selected = "Upper West Side & West Side",
@@ -634,11 +634,11 @@ server <- function(input, output) {
       summarise(permit_count = sum(permit_count))
     
     p <- ggplot(data, aes(year, permit_count)) + 
-      geom_point(data = subset(data, puma_name != input$puma),
+      geom_point(data = subset(data, puma_name != input$puma_homevalue),
                  color = "gray",
                  size = 2, 
                  alpha = 0.5) +
-      geom_point(data = subset(data, puma_name == input$puma), 
+      geom_point(data = subset(data, puma_name == input$puma_homevalue), 
                  color = "#1B9E77",
                  size = 3) +
       scale_x_continuous(breaks= c(2009:2019)) +
@@ -663,7 +663,7 @@ server <- function(input, output) {
       geom_point(color = "gray", 
                  size = 2, 
                  alpha = 0.5) +
-      geom_point(data = subset(x = data, puma_name == input$puma), 
+      geom_point(data = subset(x = data, puma_name == input$puma_homevalue), 
                  color = "#1B9E77",
                  size = 3) +
       scale_x_continuous(breaks= c(2009:2019)) +
@@ -685,7 +685,7 @@ server <- function(input, output) {
 
     p <- ggplot(data, aes(x = year, y = estimate, color = puma_name)) +
       geom_line(size = 1.5) +
-      gghighlight(puma_name == input$puma) +
+      gghighlight(puma_name == input$puma_homevalue) +
       scale_color_manual(values = dark2) +
       scale_x_continuous(breaks= c(2009:2019)) +
       scale_y_continuous(labels = scales::dollar) +
@@ -708,7 +708,7 @@ server <- function(input, output) {
 
     p <- ggplot(data, aes(x = year, y = estimate, color = puma_name)) +
       geom_line(size = 1.5) +
-      gghighlight(puma_name == input$puma) +
+      gghighlight(puma_name == input$puma_homevalue) +
       scale_color_manual(values = dark2) +     
       scale_x_continuous(breaks= c(2009:2019)) +
       scale_y_continuous(labels = scales::dollar) +
@@ -725,7 +725,7 @@ server <- function(input, output) {
   
   output$renter_pct <- renderPlotly({
     data <- renter_pct %>%
-      filter(puma_name == input$puma)
+      filter(puma_name == input$puma_homevalue)
     
     p <- ggplot(data, aes(year, estimate, fill = variable)) +
       geom_bar(stat = "identity", position = "fill") + 
@@ -1014,7 +1014,7 @@ server <- function(input, output) {
   
   output$median_age <- renderPlot({
     
-    ggplot(mean_group, aes(as.factor(year), median_age, colour=puma_name)) + 
+    ggplot(mean_group, aes(year, median_age, colour=puma_name)) + 
       geom_line(aes(group = puma_name)) + 
       scale_color_manual(values = dark2) +
       gghighlight(puma_name == input$puma) +
