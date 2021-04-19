@@ -6,7 +6,8 @@
 
 **Quick Links**:
 
-* [Project video](https://drive.google.com/file/d/13CRO3FSNU589-e9DpdtR8awPPxpl-ljz/view?usp=sharing) (use Columbia email to view)
 * [Dashboard](https://yjw2106.shinyapps.io/GroupJNYC/)
+* [Project video](https://drive.google.com/file/d/13CRO3FSNU589-e9DpdtR8awPPxpl-ljz/view?usp=sharing) (use Columbia email to view)
+* [Progress book](https://docs.google.com/presentation/d/1RxyL544j4lSkCZfmShXFZS7g2BJMV9RW0M6-Ga_Xg8M/edit?usp=sharing)
 
 
