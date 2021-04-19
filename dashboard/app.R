@@ -8,7 +8,6 @@ library(scales)
 library(RColorBrewer)
 library(leaflet)
 library(gghighlight)
-library(plm)
 library(lubridate)
 library(tm)
 library(tidytext)
@@ -28,11 +27,11 @@ library(ggraph)
 library(magrittr)
 library(visNetwork)
 library(rsconnect)
-#rsconnect::deployApp('dashboard/dashboard_code.R')
+#rsconnect::deployApp('app.R')
 
 #setwd('/Users/Melissa/Desktop/Data Visualization SP21/Group_J_NYCRealEstate/')
 #setwd("C:/Users/natal/Desktop/QMSS/Spring 2021/Data_Visualization/project/Group_J_NYCRealEstate/dashboard/")
-#setwd("G:/My Drive/0 Data Viz/project/Group_J_NYCRealEstate/")
+setwd("G:/My Drive/0 Data Viz/project/Group_J_NYCRealEstate/dashboard")
 #setwd("~/Documents/GitHub/Group_J_NYCRealEstate/")
 
 ## ---------------------------------------------------- DATA -----------------------------------------
@@ -399,22 +398,46 @@ ui <- navbarPage("Manhattan Construction",
                  tabPanel("Main",
                           mainPanel(
                             
-                            h2("Manhattan Construction and Neighborhood Changes Over Time"),
-                            h5("By Melissa S Feeney, Catherine Chen, Natalie Weng, Michelle A. Zee"),
-                            p("This project examines the Manhattan residential and commercial building construction permits 
-                       and associated changes in neighborhoods from 2009 to 2019. Data used include construction permit 
-                       data from the NYC Department of Buildings, demographic and home price data from the American 
-                       Community Survey, and neighborhood descriptions from Wikipedia.
-                         "),
-                            p("Explain background on project....why we chose to focus on Manhattan..."),
+                            img(src = "main.png", align = "right", height = "500px"),
                             
-                            fluidRow(
-                              box(plotOutput("homeprice_vs_permit", height = "45vh"), height = "45vh"),
-                              box(plotOutput("rent_vs_permit", height = "45vh"), height = "45vh")
+                            h2("Manhattan Construction and Neighborhood Changes Over Time"),
+                            p("By Melissa S Feeney, Catherine Chen, Natalie Weng, Michelle A. Zee"),
+                            br(), br(),
+                            "This project examines the Manhattan residential and commercial building construction permits 
+                               and associated changes in residents and neighborhoods from 2009 to 2019. Data used include 
+                               construction permit data from the NYC Department of Buildings, demographic and home price 
+                               data from the American 
+                               Community Survey, and neighborhood descriptions scraped from archived Wikipedia pages.",
+                            br(), br(),
+                            
+                            
+                            
+                            "The data visualizations are broken up into 4 tabs:",
+                            br(), br(),
+                            
+                            "1) ", strong("Construction "), "explores the quality and type of projects in the last 10 years 
+                            as well as the relationship between land use",
+                            br(), br(),
+                            
+                            "2) ", strong("Home Value "), "looks at home values and rents and its association with permits and home ownership",
+                            br(), br(),
+                            
+                            "3) ", strong("Demographics "), "examines the people in each neighborhood through indicators like age, population, and income",
+                            br(), br(),
+                            
+                            "4) ", strong("Neighborhood in Words "), "dives into how Wikipedia's users have added to descriptions of the neighborhoods over time",
+                            
+                            
+                            
+                            
+                            
+                            # fluidRow(
+                            #   box(plotOutput("homeprice_vs_permit", height = "45vh"), height = "45vh"),
+                            #   box(plotOutput("rent_vs_permit", height = "45vh"), height = "45vh")
                             )
-                          )
+                          ),
                           
-                 ),
+                 
                  
                  ## ---------------------------------------------------- melissa -----------------------------------------
                  
@@ -481,16 +504,16 @@ ui <- navbarPage("Manhattan Construction",
                  tabPanel("Home Value",
                           mainPanel(
                             fluidRow(
-                              box(
                                 h2("Explore Construction Data with Neighborhood Attributes"),
-                                p("Some text explaining graphs")),
-                              
-                              box(
-                                selectInput("puma",
+                                p("This tab shows the relationship between housing prices (home value and rent), construction 
+                                  permits, and home ownership. There is a clear relationship between greater construction activity 
+                                  in areas of higher home prices and also higher home ownership in the same areas"),
+                              br(), br(),
+                                selectInput("puma_homevalue",
                                             label = "Choose Neighborhood:",
                                             choices = input_puma,
                                             selected = "Upper West Side & West Side",
-                                            width = "50%"))),
+                                            width = "50%")),
                             br(), br(),
                             
                             fluidRow(
@@ -503,8 +526,8 @@ ui <- navbarPage("Manhattan Construction",
                               box(plotlyOutput("home_value"))),
                             
                             fluidRow(
-                              box(plotlyOutput("renter_pct")),
-                              box())
+                              box(plotlyOutput("renter_pct"))
+                              )
                           )
                  ),
                  ## ---------------------------------------------------- catherine -----------------------------------------
@@ -537,15 +560,14 @@ ui <- navbarPage("Manhattan Construction",
                             br(), br(),
                             
                             fluidRow(
-                              column(8, align="center",
-                                     box(plotOutput("income"))),
+                              plotOutput("income")),
                               br(), br(),
                               
-                              fluidRow(
+                            fluidRow(
                                 box(plotOutput("gender")),
                                 box(plotOutput("move"))
                               )
-                            ))),
+                            )),
                  
                  ## ---------------------------------------------------- natalie -----------------------------------------
                  
@@ -636,11 +658,11 @@ server <- function(input, output) {
       summarise(permit_count = sum(permit_count))
     
     p <- ggplot(data, aes(year, permit_count)) + 
-      geom_point(data = subset(data, puma_name != input$puma),
+      geom_point(data = subset(data, puma_name != input$puma_homevalue),
                  color = "gray",
                  size = 2, 
                  alpha = 0.5) +
-      geom_point(data = subset(data, puma_name == input$puma), 
+      geom_point(data = subset(data, puma_name == input$puma_homevalue), 
                  color = "#1B9E77",
                  size = 3) +
       scale_x_continuous(breaks= c(2009:2019)) +
@@ -665,7 +687,7 @@ server <- function(input, output) {
       geom_point(color = "gray", 
                  size = 2, 
                  alpha = 0.5) +
-      geom_point(data = subset(x = data, puma_name == input$puma), 
+      geom_point(data = subset(x = data, puma_name == input$puma_homevalue), 
                  color = "#1B9E77",
                  size = 3) +
       scale_x_continuous(breaks= c(2009:2019)) +
@@ -687,7 +709,7 @@ server <- function(input, output) {
     
     p <- ggplot(data, aes(x = year, y = estimate, color = puma_name)) +
       geom_line(size = 1.5) +
-      gghighlight(puma_name == input$puma) +
+      gghighlight(puma_name == input$puma_homevalue) +
       scale_color_manual(values = dark2) +
       scale_x_continuous(breaks= c(2009:2019)) +
       scale_y_continuous(labels = scales::dollar) +
@@ -710,7 +732,7 @@ server <- function(input, output) {
     
     p <- ggplot(data, aes(x = year, y = estimate, color = puma_name)) +
       geom_line(size = 1.5) +
-      gghighlight(puma_name == input$puma) +
+      gghighlight(puma_name == input$puma_homevalue) +
       scale_color_manual(values = dark2) +     
       scale_x_continuous(breaks= c(2009:2019)) +
       scale_y_continuous(labels = scales::dollar) +
@@ -727,7 +749,7 @@ server <- function(input, output) {
   
   output$renter_pct <- renderPlotly({
     data <- renter_pct %>%
-      filter(puma_name == input$puma)
+      filter(puma_name == input$puma_homevalue)
     
     p <- ggplot(data, aes(year, estimate, fill = variable)) +
       geom_bar(stat = "identity", position = "fill") + 
@@ -1016,24 +1038,29 @@ server <- function(input, output) {
   
   output$median_age <- renderPlot({
     
-    ggplot(mean_group, aes(as.factor(year), median_age, colour=puma_name)) + 
+    ggplot(mean_group, aes(year, median_age, colour=puma_name)) + 
       geom_line(aes(group = puma_name)) + 
       scale_color_manual(values = dark2) +
       gghighlight(puma_name == input$puma) +
+      theme_minimal() +
+      scale_x_continuous(breaks= c(2009:2019)) +
+      
       ggtitle("Neighborhood Median Age Through Years") +
-      xlab("Year") + ylab("Median Age")+
-      geom_point()}) 
-  
+      xlab("Year") + ylab("Median Age")
+  })
   
   output$population <- renderPlot({
     
-    ggplot(pop_group, aes(as.factor(year), median_population, colour=puma_name)) + 
+    ggplot(pop_group, aes(year, median_population, colour=puma_name)) + 
       geom_line(aes(group = puma_name)) + 
       gghighlight(puma_name == input$puma) +
+      theme_minimal() +
+      scale_x_continuous(breaks= c(2009:2019)) +
+      
       scale_color_manual(values = dark2) +
       ggtitle("Neighborhood Median Population Through Years") +
-      xlab("Year") + ylab("Median Population")+
-      geom_point()}) 
+      xlab("Year") + ylab("Median Population")
+  })
   
   
   output$income <- renderPlot({
@@ -1042,6 +1069,7 @@ server <- function(input, output) {
       geom_area(color = "white", alpha = 0.4) +
       scale_fill_manual(values = dark2) +
       scale_x_continuous(breaks= c(2009:2019)) +
+      theme_minimal() +
       # gghighlight(puma_name == input$puma) +
       scale_y_continuous(expand = c(0, 0), labels = scales::dollar) +
       labs(title = "",
@@ -1051,8 +1079,10 @@ server <- function(input, output) {
            y = "Median Household Income ($)",
            fill = NULL) +
       theme(panel.grid.major.x = element_blank(),
-            legend.position = "right")}, height = 400, width = 800) 
+            legend.position = "right")
+         #   height = 400, width = 800)
   
+  })
   
   
   output$gender <- renderPlot({
@@ -1068,7 +1098,8 @@ server <- function(input, output) {
            x=NULL,
            y=NULL, 
            title="Gender Distribution",
-           caption="Source: ACS")}) 
+           caption="Source: ACS")
+    }) 
   
   output$move <- renderPlot({
     
@@ -1085,10 +1116,8 @@ server <- function(input, output) {
            x=NULL,
            y=NULL, 
            title="Last Move From Distribution",
-           caption="Source: ACS")}) 
-  
-  
-  
+           caption="Source: ACS")
+    }) 
   
   
 }
