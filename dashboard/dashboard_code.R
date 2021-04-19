@@ -31,9 +31,9 @@ library(rsconnect)
 #rsconnect::deployApp('dashboard/dashboard_code.R')
 
 #setwd('/Users/Melissa/Desktop/Data Visualization SP21/Group_J_NYCRealEstate/')
-setwd("C:/Users/natal/Desktop/QMSS/Spring 2021/Data_Visualization/project/Group_J_NYCRealEstate/")
+#setwd("C:/Users/natal/Desktop/QMSS/Spring 2021/Data_Visualization/project/Group_J_NYCRealEstate/")
 #setwd("G:/My Drive/0 Data Viz/project/Group_J_NYCRealEstate/")
-#setwd("~/Documents/GitHub/Group_J_NYCRealEstate/")
+setwd("~/Documents/GitHub/Group_J_NYCRealEstate/")
 
 ## ---------------------------------------------------- DATA -----------------------------------------
 
@@ -526,7 +526,7 @@ ui <- navbarPage("Manhattan Construction",
                             
                               selectInput("puma",
                                           label = "Choose Neighborhood:",
-                                          choices = input_puma,
+                                          choices = input_puma_2,
                                           selected = "Upper West Side & West Side",
                                           width = "50%")),
                             fluidRow(
@@ -1015,9 +1015,10 @@ server <- function(input, output) {
   output$median_age <- renderPlot({
     
     ggplot(mean_group, aes(year, median_age, colour=puma_name)) + 
+
       geom_line(aes(group = puma_name)) + 
       scale_color_manual(values = dark2) +
-      gghighlight(puma_name == input$puma) +
+      gghighlight(puma_name == input$puma_2) +
       ggtitle("Neighborhood Median Age Through Years") +
       xlab("Year") + ylab("Median Age")+
       geom_point()}) 
@@ -1025,9 +1026,9 @@ server <- function(input, output) {
   
   output$population <- renderPlot({
     
-    ggplot(pop_group, aes(as.factor(year), median_population, colour=puma_name)) + 
+    ggplot(pop_group, aes(as.factor(year), median_population, color=puma_name)) + 
       geom_line(aes(group = puma_name)) + 
-      gghighlight(puma_name == input$puma) +
+      gghighlight(puma_name == input$puma_2) +
       scale_color_manual(values = dark2) +
       ggtitle("Neighborhood Median Population Through Years") +
       xlab("Year") + ylab("Median Population")+
@@ -1055,7 +1056,7 @@ server <- function(input, output) {
   
   output$gender <- renderPlot({
     
-    ggplot(data = subset(x = gender_clean, puma_name == input$puma), aes(x="", y=fraction, fill=gender))+
+    ggplot(data = subset(x = gender_clean, puma_name == input$puma_2), aes(x="", y=fraction, fill=gender))+
       geom_bar(width = 1, stat = "identity") +
       scale_fill_manual(values = dark2)+
       theme_minimal()+
@@ -1070,7 +1071,7 @@ server <- function(input, output) {
   
   output$move <- renderPlot({
     
-    ggplot(data = subset(x = move_clean, puma_name == input$puma), aes(x="", y=fraction, fill= move_from))+
+    ggplot(data = subset(x = move_clean, puma_name == input$puma_2), aes(x="", y=fraction, fill= move_from))+
       geom_bar(width = 1, stat = "identity") +
       theme(axis.line = element_blank() )+
       scale_fill_manual(values = dark2) +
