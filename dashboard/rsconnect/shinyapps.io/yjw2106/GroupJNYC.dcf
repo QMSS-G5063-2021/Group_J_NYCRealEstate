@@ -1,0 +1,14 @@
+name: GroupJNYC
+title: GroupJNYC
+username:
+account: yjw2106
+server: shinyapps.io
+hostUrl: https://api.shinyapps.io/v1
+appId: 3989328
+bundleId: 4488458
+url: https://yjw2106.shinyapps.io/GroupJNYC/
+when: 1618796836.63897
+lastSyncTime: 1618796836.63897
+asMultiple: FALSE
+asStatic: FALSE
+ignoredFiles: .Rapp.history|dash_branch_demographics.R|dashboard_code.R
