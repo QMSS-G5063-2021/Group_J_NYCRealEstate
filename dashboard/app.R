@@ -26,13 +26,14 @@ library(tidyr)
 library(ggraph)
 library(magrittr)
 library(visNetwork)
-library(rsconnect)
+#library(rsconnect)
+library(DT)
 #rsconnect::deployApp('app.R')
 
 
-#setwd('/Users/Melissa/Desktop/Data Visualization SP21/Group_J_NYCRealEstate/dashboard/')
+setwd('/Users/Melissa/Desktop/Data Visualization SP21/Group_J_NYCRealEstate/dashboard/')
 #setwd("C:/Users/natal/Desktop/QMSS/Spring 2021/Data_Visualization/project/Group_J_NYCRealEstate/dashboard/")
-setwd("G:/My Drive/0 Data Viz/project/Group_J_NYCRealEstate/dashboard")
+#setwd("G:/My Drive/0 Data Viz/project/Group_J_NYCRealEstate/dashboard")
 #setwd("~/Documents/GitHub/Group_J_NYCRealEstate/")
 
 ## ---------------------------------------------------- DATA -----------------------------------------
@@ -249,6 +250,7 @@ trans_types <- trans_types %>% select(from, to, count_type, PermitYear, transfor
 trans_types_vertices <- unique(trans_types[,1]) %>% as.data.frame()
 colnames(trans_types_vertices)[1] <- 'occupancy_type'  
 
+
 ## ---------------------------------------------------- melissa end -------------------------------------
 
 # - clean TimeMachine.csv data for text analysis
@@ -413,7 +415,7 @@ ui <- navbarPage("Manhattan Construction",
                             
                             
                             
-                            "The data visualizations are broken up into 4 tabs:",
+                            "The data visualizations are broken up into 5 tabs:",
                             br(), br(),
                             
                             "1) ", strong("Construction "), "explores the quality and type of projects in the last 10 years 
@@ -427,6 +429,9 @@ ui <- navbarPage("Manhattan Construction",
                             br(), br(),
                             
                             "4) ", strong("Neighborhood in Words "), "dives into how Wikipedia's users have added to descriptions of the neighborhoods over time",
+                            br(), br(),
+                            
+                            "5)", strong("Construction Data Reference "), "provides the construction data used in the analysis",
                             
                             
                             
@@ -502,6 +507,7 @@ ui <- navbarPage("Manhattan Construction",
                             )
                           )
                  ),
+                 
                  
                  ## ---------------------------------------------------- michelle -----------------------------------------
                  
@@ -622,8 +628,31 @@ ui <- navbarPage("Manhattan Construction",
                               plotlyOutput("word_count"),
                               p(""))
                           )
-                 )
-)
+                 ),
+                 
+                 ## ---------------------------------------------------- melissa construction dataset tab -----------------------------------------
+                 
+                 tabPanel("Construction Data Reference",
+                          mainPanel(
+                            fluidRow(
+                              h2('Manhattan Construction Data'),
+                              br(), br(),
+                              p('This tab serves as a reference of the construction data used in this analysis. It contains various points of data
+                                for construction projects with completion dates ranging from 2010 through present. However, for this analysis permit date, 
+                                as opposed to completion date, was used to better illustrate project intention. Initially, the dataset included detail
+                                on new building projects, building alteration projects, and building demolition projects, in every borough of New York City. 
+                                For this analysis, building demolitions were excluded.'),
+                              h3('New Buildings Data'),
+                              DT::dataTableOutput('newbuild_dt'),
+                              br(), br(), br(), br(),
+                              h3('Building Alterations Data'),
+                              DT::dataTableOutput('buildalt_dt')
+                            )
+                            
+                          )
+                          
+                        )
+  )
 
 
 ## ---------------------------------------------------- SERVER -----------------------------------------
@@ -776,6 +805,7 @@ server <- function(input, output) {
   
   
   ## ---------------------------------------------------- melissa -----------------------------------------
+  
   output$const_new_map <- renderLeaflet({
     # New Construction Map
     # Prep Pop-up details
@@ -874,10 +904,11 @@ server <- function(input, output) {
              colorway = mycolors, 
              font = font_styling)
     
-    # Alterations
+    
     tree_map_nb_int
   })  
   
+  # Alterations
   output$treemap_alt_int <- renderPlotly({ 
     tree_map_alt_int <- plot_ly(
       tree_map_alt,
@@ -920,6 +951,44 @@ server <- function(input, output) {
       visIgraphLayout(layout = 'layout_in_circle') %>% 
       visLayout(randomSeed = 13)
     network_g
+  })
+  
+  ####
+  ################# Data table wrangling
+
+  
+  ########## Data Tables
+  output$newbuild_dt <- DT::renderDataTable({
+    # New Buildings
+    manhattan_nb_dt <- manhattan_nb %>% select(Job_Number, Job_Type, pumaname10, Complete_Address, Latitude, Longitude, 
+                                               Job_Status, PermitYear, permit_yr_group, Occ_Init, Occ_Prop, Job_Desc, 
+                                               transformation_type)
+    
+    names1 <- c('Job Number', 'Job Type', 'PUMA Name', 'Complete Address', 'Project Latitude', 'Project Longitude', 'Job Status', 
+                'Permit Year', 'Permit Year Grouping', 'Initial Occupancy Type', 'Proposed Occupancy Type', 'Occupancy Transformation Type', 
+                'Job Description')
+    
+    # New Buildings DT
+    newbuild_dt <- manhattan_nb_dt %>% datatable(rownames = FALSE, colnames = names1, filter = list(position = "top"), 
+                                                 options = list(language = list(sSearch = "Filter:")))
+    newbuild_dt
+  })
+  
+
+  output$buildalt_dt <- DT::renderDataTable({
+    # Alterations
+    manhattan_alt_dt <- manhattan_a %>% select(Job_Number, Job_Type, pumaname10, Complete_Address, Latitude, Longitude, 
+                                               Job_Status, PermitYear, permit_yr_group, Occ_Init, Occ_Prop, Job_Desc, 
+                                               transformation_type)
+    
+    names2 <- c('Job Number', 'Job Type', 'PUMA Name', 'Complete Address', 'Project Latitude', 'Project Longitude', 'Job Status', 
+                'Permit Year', 'Permit Year Grouping', 'Initial Occupancy Type', 'Proposed Occupancy Type', 'Occupancy Transformation Type', 
+                'Job Description')
+    
+    # Alterations DT
+    altbuild_dt <- manhattan_nb_dt %>% datatable(rownames = FALSE, colnames = names2, filter = list(position = "top"), 
+                                                 options = list(language = list(sSearch = "Filter:")))
+    altbuild_dt
   })
   
   ## ---------------------------------------------------- natalie -----------------------------------------
