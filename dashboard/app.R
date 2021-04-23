@@ -31,9 +31,9 @@ library(DT)
 #rsconnect::deployApp('app.R')
 
 
-#setwd('/Users/Melissa/Desktop/Data Visualization SP21/Group_J_NYCRealEstate/dashboard/')
+setwd('/Users/Melissa/Desktop/Data Visualization SP21/Group_J_NYCRealEstate/dashboard/')
 #setwd("C:/Users/natal/Desktop/QMSS/Spring 2021/Data_Visualization/project/Group_J_NYCRealEstate/dashboard/")
-setwd("G:/My Drive/0 Data Viz/project/Group_J_NYCRealEstate/dashboard")
+#setwd("G:/My Drive/0 Data Viz/project/Group_J_NYCRealEstate/dashboard")
 #setwd("~/Documents/GitHub/Group_J_NYCRealEstate/")
 
 ## ---------------------------------------------------- DATA -----------------------------------------
@@ -810,38 +810,72 @@ server <- function(input, output) {
   
   output$const_new_map <- renderLeaflet({
     # New Construction Map
-    # Prep Pop-up details
     popup_content1 <- paste('Project Address:', manhattan_nb$Complete_Address, '<br/>',
                             'Job Status:',manhattan_nb$Job_Status,'<br/>',
                             'Transformation Type:',manhattan_nb$transformation_type, '<br>',
                             'Building Ownership:',manhattan_nb$Ownership,'<br/>',
-                            'PUMA:',manhattan_nb$PUMA2010,'<br/>')
-    # Map Title
-    map_title1 <- tags$p(tags$style('p {color: black; font-size: 20px}'),
-                         tags$b('Construction in Manhattan: \n New Buildings'))
+                            'Permit Year:', manhattan_nb$PermitYear)
     
-    # Color Palette 1 for the Map: Job Permit Year Group
-    pal1 = colorFactor('Dark2', domain = manhattan_nb$permit_yr_group) 
-    color_permit_yr_group = pal1(manhattan_nb$permit_yr_group)
-    
-    # Add ability to check the permit year and job type
+    # Add ability to check the permit year group
     manhattan_nb_map <- leaflet(manhattan_nb) %>%
       addTiles() %>%
       setView(lng = -73.98928, lat = 40.75042, zoom = 12) %>%
-      addProviderTiles(providers$Wikimedia) %>% 
+      addProviderTiles(providers$Wikimedia)  %>%
       
-      # Add Permit Year Data
-      addCircleMarkers(color = color_permit_yr_group, 
-                       popup = popup_content1,
-                       group = 'Toggle: Project Permit Year Group',
-                       clusterOptions = markerClusterOptions()) %>%
-      addLegend(pal = pal1, values = ~manhattan_nb$permit_yr_group, title = 'Project Permit Year Group', position = 'bottomright') %>%
+      addCircleMarkers(
+        data = subset(manhattan_nb, manhattan_nb$permit_yr_group == "2000 - 2004"),
+        popup = popup_content1,
+        group = "2000 - 2004",
+        radius = 3,
+        fillOpacity = 0.6,
+        color = "#1B9E77",
+        clusterOptions = markerClusterOptions()) %>%
       
-      # Layers to add toggle ability
-      addLayersControl(#baseGroups = c('Toggle: Project Permit Year Group'),
-        options = layersControlOptions(collapsed = FALSE), position = 'bottomright') %>%
+      addCircleMarkers(
+        data = subset(manhattan_nb, manhattan_nb$permit_yr_group == "2005 - 2009"),
+        popup = popup_content1,
+        group = "2005 - 2009",
+        radius = 3,
+        fillOpacity = 0.6,
+        color = "#D95F02",
+        clusterOptions = markerClusterOptions()) %>%
       
-      # Add map title
+      addCircleMarkers(
+        data = subset(manhattan_nb, manhattan_nb$permit_yr_group == "2010 - 2014"),
+        popup = popup_content1,
+        group = "2010 - 2014",
+        radius = 3,
+        fillOpacity = 0.6,
+        color = "#7570B3",
+        clusterOptions = markerClusterOptions()) %>%
+      
+      addCircleMarkers(
+        data = subset(manhattan_nb, manhattan_nb$permit_yr_group == "2015 - 2019"),
+        popup = popup_content1,
+        group = "2015 - 2019",
+        radius = 3,
+        fillOpacity = 0.6,
+        color = "#E7298A",
+        clusterOptions = markerClusterOptions()) %>%
+      
+      addCircleMarkers(
+        data = subset(manhattan_nb, manhattan_nb$permit_yr_group == "2020 - Present"),
+        popup = popup_content1,
+        group = "2020 - Present",
+        radius = 3,
+        fillOpacity = 0.6,
+        color = "#666666",
+        clusterOptions = markerClusterOptions()) %>%
+      
+      addLegend(group = "2020 - Present", position = "bottomleft", labels = "2020 - Present", colors= "#666666", title = "Permit Year Group") %>%
+      addLegend(group = "2015 - 2019", position = "bottomleft", labels = "2015 - 2019", colors= "#E7298A", title = "Permit Year Group") %>%  
+      addLegend(group = "2010 - 2014", position = "bottomleft", labels = "2010 - 2014", colors= "#7570B3", title = "Permit Year Group") %>% 
+      addLegend(group = "2005 - 2009", position = "bottomleft", labels = "2005 - 2009", colors= "#D95F02", title = "Permit Year Group") %>%  
+      addLegend(group = "2000 - 2004", position = "bottomleft", labels = "2000 - 2004", colors= "#1B9E77", title = "Permit Year Group") %>%
+      
+      addLayersControl(overlayGroups = c("2000 - 2004", "2005 - 2009", "2010 - 2014", "2015 - 2019", "2020 - Present"),
+                       options = layersControlOptions(collapsed = FALSE, position = 'bottomright')) %>%
+      
       addControl(map_title1, position = 'topright')
     
     manhattan_nb_map
@@ -849,41 +883,76 @@ server <- function(input, output) {
   
   output$const_alt_map <- renderLeaflet({
     # Alteration Map
-    # Prep Pop-up details
     popup_content2 <- paste('Project Address:', manhattan_a$Complete_Address, '<br/>',
                             'Job Status:',manhattan_a$Job_Status,'<br/>',
                             'Transformation Type:',manhattan_a$transformation_type, '<br>',
                             'Building Ownership:',manhattan_a$Ownership,'<br/>',
-                            'Permit Year:',manhattan_a$PermitYear, '<br>',
-                            'PUMA:',manhattan_a$PUMA2010,'<br/>')
+                            'Permit Year:', manhattan_a$PermitYear)
     
     # Map Title
     map_title2 <- tags$p(tags$style('p {color: black; font-size: 20px}'),
-                         tags$b('Construction in Manhattan: \n Building Alterations'))
+                         tags$b('Construction in Manhattan:\n Building Alterations'))
     
-    # Color Palette 2 for the Map: Job Permit Year
-    pal2 = colorFactor('Dark2', domain = manhattan_a$permit_yr_group) 
-    color_permit_yr_group = pal2(manhattan_a$permit_yr_group)
-    
-    
-    # Add ability to check the permit year and job type
+    # Add ability to check the permit year group
     manhattan_alt_map <- leaflet(manhattan_a) %>%
       addTiles() %>%
       setView(lng = -73.98928, lat = 40.75042, zoom = 12) %>%
-      addProviderTiles(providers$Wikimedia) %>% 
+      addProviderTiles(providers$Wikimedia)  %>%
       
-      # Add Permit Year Data
-      addCircleMarkers(color = color_permit_yr_group, 
-                       popup = popup_content2,
-                       group = 'Toggle: Project Permit Year Group',
-                       clusterOptions = markerClusterOptions()) %>%
-      addLegend(pal = pal2, values = ~manhattan_a$permit_yr_group, title = 'Project Permit Year Group', position = 'bottomright') %>%
+      addCircleMarkers(
+        data = subset(manhattan_a, manhattan_a$permit_yr_group == "2000 - 2004"),
+        popup = popup_content2,
+        group = "2000 - 2004",
+        radius = 3,
+        fillOpacity = 0.6,
+        color = "#1B9E77",
+        clusterOptions = markerClusterOptions()) %>%
       
-      # Layers to add toggle ability
-      addLayersControl(#baseGroups = c('Toggle: Project Permit Year'),
-        options = layersControlOptions(collapsed = FALSE), position = 'bottomright') %>%
+      addCircleMarkers(
+        data = subset(manhattan_a, manhattan_a$permit_yr_group == "2005 - 2009"),
+        popup = popup_content2,
+        group = "2005 - 2009",
+        radius = 3,
+        fillOpacity = 0.6,
+        color = "#D95F02",
+        clusterOptions = markerClusterOptions()) %>%
       
-      # Add map title
+      addCircleMarkers(
+        data = subset(manhattan_a, manhattan_a$permit_yr_group == "2010 - 2014"),
+        popup = popup_content2,
+        group = "2010 - 2014",
+        radius = 3,
+        fillOpacity = 0.6,
+        color = "#7570B3",
+        clusterOptions = markerClusterOptions()) %>%
+      
+      addCircleMarkers(
+        data = subset(manhattan_a, manhattan_a$permit_yr_group == "2015 - 2019"),
+        popup = popup_content2,
+        group = "2015 - 2019",
+        radius = 3,
+        fillOpacity = 0.6,
+        color = "#E7298A",
+        clusterOptions = markerClusterOptions()) %>%
+      
+      addCircleMarkers(
+        data = subset(manhattan_a, manhattan_a$permit_yr_group == "2020 - Present"),
+        popup = popup_content2,
+        group = "2020 - Present",
+        radius = 3,
+        fillOpacity = 0.6,
+        color = "#666666",
+        clusterOptions = markerClusterOptions()) %>%
+      
+      addLegend(group = "2020 - Present", position = "bottomleft", labels = "2020 - Present", colors= "#666666", title = "Permit Year Group") %>%
+      addLegend(group = "2015 - 2019", position = "bottomleft", labels = "2015 - 2019", colors= "#E7298A", title = "Permit Year Group") %>%  
+      addLegend(group = "2010 - 2014", position = "bottomleft", labels = "2010 - 2014", colors= "#7570B3", title = "Permit Year Group") %>% 
+      addLegend(group = "2005 - 2009", position = "bottomleft", labels = "2005 - 2009", colors= "#D95F02", title = "Permit Year Group") %>%  
+      addLegend(group = "2000 - 2004", position = "bottomleft", labels = "2000 - 2004", colors= "#1B9E77", title = "Permit Year Group") %>%
+      
+      addLayersControl(overlayGroups = c("2000 - 2004", "2005 - 2009", "2010 - 2014", "2015 - 2019", "2020 - Present"),
+                       options = layersControlOptions(collapsed = FALSE, position = 'bottomright')) %>%
+      
       addControl(map_title2, position = 'topright')
     
     manhattan_alt_map
