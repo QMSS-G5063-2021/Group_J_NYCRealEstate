@@ -810,7 +810,7 @@ server <- function(input, output) {
   
   output$const_new_map <- renderLeaflet({
     # New Construction Map
-    popup_content1 <- paste('Project Address:', manhattan_nb$Complete_Address, '<br/>',
+    popup_content1 <- paste(#'Project Address:', manhattan_nb$Complete_Address, '<br/>',
                             'Job Status:',manhattan_nb$Job_Status,'<br/>',
                             'Transformation Type:',manhattan_nb$transformation_type, '<br>',
                             'Building Ownership:',manhattan_nb$Ownership,'<br/>',
@@ -883,7 +883,7 @@ server <- function(input, output) {
   
   output$const_alt_map <- renderLeaflet({
     # Alteration Map
-    popup_content2 <- paste('Project Address:', manhattan_a$Complete_Address, '<br/>',
+    popup_content2 <- paste(#'Project Address:', manhattan_a$Complete_Address, '<br/>',
                             'Job Status:',manhattan_a$Job_Status,'<br/>',
                             'Transformation Type:',manhattan_a$transformation_type, '<br>',
                             'Building Ownership:',manhattan_a$Ownership,'<br/>',
