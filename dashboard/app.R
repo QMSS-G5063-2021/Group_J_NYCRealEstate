@@ -451,18 +451,21 @@ ui <- navbarPage("Manhattan Construction",
                           mainPanel(
                             fluidRow(
                               h2('Construction across Manhattan'),
-                              br(), br(),
+                              br(), 
                               h4('Overview of Manhattan Construction'),
-                              h5('Within the past 20 years, there have been many types of construction projects within Manhattan. Judging by the maps, some of the highest 
-                                  concentrations of new building projects have occurred in areas other than Midtown. This is not surprising since Midtown is already congested 
-                                  with lots of buildings, without many empty sites on which to build. However, Midtown has seen a fair amount of building alteration projects, 
-                                  implying that changes in building occupancy types may be a large motivation in these project decisions.'),
-                              br(),
-                              h5('The interactive maps below show the precise locations of permits for new building projects and building alteration projects within 
-                                  the past 20 years. Permit year, as opposed to completion year, is used in an effort to better illustrate project intention. For ease of use
-                                  the permit years are separated into 5 groups- one for permits dated 2000 to 2004, one for those dated 2005 to 2009, one for those dated 
-                                  2010 to 2014, one for those dated 2015 to 2019, and finally one for those dated 2020 to present. The map uses clustering to make it easier to
-                                  see high concentrations of projects in certain areas when zoomed out. This ability to zoom in and out allows for precise location tracking.'),
+                              'Within the past 20 years, there have been many types of construction projects within Manhattan. Judging by the maps, some of the highest 
+                              concentrations of new building projects, have occurred in areas other than Midtown. This is not surprising since Midtown is already congested 
+                              with lots of buildings, without many empty sites on which to build. However, Midtown has seen a fair amount of building alteration projects,   
+                              implying that changes in building occupancy types may be a large motivation in these project decisions.',
+                              br(), br(), 
+                              'The', strong('interactive maps '), 'below show the precise locations of permits for', strong('new building projects '), 'and', 
+                              strong('building alteration projects '), 'within the past 20 years.', strong('Permit year '), 'as opposed to completion year, 
+                              is used in an effort to better illustrate project intention. For ease of use the permit years are separated into 5 groups- one
+                              for permits dated 2000 to 2004, one for those dated 2005 to 2009, one for those dated 2010 to 2014, one for those dated 2015 to 2019, 
+                              and finally one for those dated 2020 to present. The permit year checkboxes on the bottom right can be checked according to time 
+                              frames of interest, and the color legend on the bottom left indicates the different permit year groups. The map uses', 
+                              strong('clustering to make it easier to see high concentrations '), 'of projects in certain areas when zoomed out. 
+                              This', strong('ability to zoom in and out '), 'allows for precise location tracking.',
                               
                               leafletOutput('const_new_map'),
                               br(), br(), br(),
@@ -473,15 +476,15 @@ ui <- navbarPage("Manhattan Construction",
                             
                             fluidRow(
                               h4('Construction Project Composition by Neighborhood'),
-                              h5('Over the past 20 years, neighborhood groups (dictated by PUMA) on the West Side of Manhattan have seen some of the highest volume of new 
-                                 building projects. With the exception of Harlem neighborhoods, the neighborhood groups in the Upper parts of Manhattan have seen the 
-                                 lowest volume of new building projects. It is harder to detect a pattern within new building alterations, as there are a wide variety
-                                 of these projects in many neighborhoods. Given these observations, it could be interesting to investigate the changes in intended occupancies
-                                 among both types of projects.'),
-                              br(),
-                              h5('The interactive tree maps below allow for comparison of construction projects among neighborhood groups, as determined by PUMA. 
-                                   The sizes of the boxes represent the volume of new building projects or building alteration projects within each neighborhood group.
-                                   Hovering over a box will display the number of projects specifically within that neighborhood group.'),
+                              'Over the past 20 years, neighborhood groups (dictated by PUMA) on the West Side of Manhattan have seen some of the highest volume of new 
+                               building projects. With the exception of Harlem neighborhoods, the neighborhood groups in the Upper parts of Manhattan have seen the 
+                               lowest volume of new building projects. It is harder to detect a pattern within new building alterations, as there are a wide variety
+                               of these projects in many neighborhoods. Given these observations, it could be interesting to investigate the changes in intended occupancies
+                               among both types of projects.',
+                              br(), br(),
+                              'The', strong('interactive treemaps '), 'below allow for comparison of construction projects among neighborhood groups, as determined by PUMA. 
+                               The', strong('sizes of the boxes represent the volume '), 'of new building projects or building alteration projects within each neighborhood group.
+                               Hovering over a box will display the number of projects specifically within that neighborhood group.',
                               br(),   
                               box(plotlyOutput('treemap_newb_int')),
                               box(plotlyOutput('treemap_alt_int')),
@@ -490,18 +493,18 @@ ui <- navbarPage("Manhattan Construction",
                             
                             fluidRow(
                               h4('Building Occupancy Transformations'),
-                              h5('As a result of the new building and building alteration projects mentioned above,it is not uncommon for buildings in Manhattan to change
-                                 ccupancy types. Each node represents one of the occupancy types, with the size determined by the in-degree of each node, as a way to
-                                 represent the transformations into said occupancy type. It is worth noting that since all new building construction projects start from
-                                 empty sites, the in-degree of the empity site node is 0. Across both types of construction projects, transformations into residential 
-                                 and commercial buildings have been the most frequent in the past 20 years. On the contrary, transformations into educational occupancy 
-                                 buildings have been the least frequent in this time range. Given the changes that COVID-19 has inflicted upon office buildings, it could
-                                 be interesting to see how the building alteration trend evolves.'),
-                              br(), 
-                              h5('In the interactive directed network graph below, each node represents a building occupancy type and is labeled as such. Hovering over a node will
-                                  display a pop-up which indicates the number of projects in which a building was transformed into the occupancy type of that node. This is
-                                  determined by the in-degree of each node, with the direction being dictated by the edge arrows. Clicking on a node will better highlight its 
-                                  connections with other nodes, and dragging and/or rearranging the nodes can reveal additional node relationships.'),
+                              'As a result of the new building and building alteration projects mentioned above,it is not uncommon for buildings in Manhattan to change
+                               ccupancy types. Each node represents one of the occupancy types, with the size determined by the in-degree of each node, as a way to
+                               represent the transformations into said occupancy type. It is worth noting that since all new building construction projects start from
+                               empty sites, the in-degree of the empity site node is 0. Across both types of construction projects, transformations into residential 
+                               and commercial buildings have been the most frequent in the past 20 years. On the contrary, transformations into educational occupancy 
+                               buildings have been the least frequent in this time range. Given the changes that COVID-19 has inflicted upon office buildings, it could
+                               be interesting to see how the building alteration trend evolves.',
+                              br(), br(),
+                              'In the', strong('interactive directed network graph '), 'below, each node represents a building occupancy type and is labeled as such. Hovering over a node will
+                               display a', strong('pop-up which indicates the number of projects in which a building was transformed into the occupancy type of that node. '), 'This is
+                               determined by the in-degree of each node, with the direction being dictated by the edge arrows.', strong(' Clicking on a node will better highlight its 
+                               connections with other nodes '), 'and dragging and/or rearranging the nodes can reveal additional node relationships.',
                               br(), br(),
                               visNetworkOutput('constr_network', width = "100%", height = "600px")
                             )
@@ -636,12 +639,13 @@ ui <- navbarPage("Manhattan Construction",
                           mainPanel(
                             fluidRow(
                               h2('Manhattan Construction Data'),
-                              br(), br(),
-                              p('This tab serves as a reference of the construction data used in this analysis. It contains various points of data
+                              br(), 
+                              'This tab serves as a reference of the construction data used in this analysis. It contains various points of data
                                 for construction projects with completion dates ranging from 2010 through present. However, for this analysis permit date, 
                                 as opposed to completion date, was used to better illustrate project intention. Initially, the dataset included detail
                                 on new building projects, building alteration projects, and building demolition projects, in every borough of New York City. 
-                                For this analysis, building demolitions were excluded.'),
+                                For this analysis, building demolitions were excluded.',
+                              br(), br(),
                               h3('New Buildings Data'),
                               br(), br(),
                               DT::dataTableOutput('newbuild_dt'),
@@ -810,11 +814,10 @@ server <- function(input, output) {
   
   output$const_new_map <- renderLeaflet({
     # New Construction Map
-    popup_content1 <- paste(#'Project Address:', manhattan_nb$Complete_Address, '<br/>',
-                            'Job Status:',manhattan_nb$Job_Status,'<br/>',
-                            'Transformation Type:',manhattan_nb$transformation_type, '<br>',
-                            'Building Ownership:',manhattan_nb$Ownership,'<br/>',
-                            'Permit Year:', manhattan_nb$PermitYear)
+    
+    # Map Title
+    map_title1 <- tags$p(tags$style('p {color: black; font-size: 20px}'),
+                         tags$b('Construction in Manhattan:\n New Buildings'))
     
     # Add ability to check the permit year group
     manhattan_nb_map <- leaflet(manhattan_nb) %>%
@@ -824,7 +827,6 @@ server <- function(input, output) {
       
       addCircleMarkers(
         data = subset(manhattan_nb, manhattan_nb$permit_yr_group == "2000 - 2004"),
-        popup = popup_content1,
         group = "2000 - 2004",
         radius = 3,
         fillOpacity = 0.6,
@@ -833,7 +835,6 @@ server <- function(input, output) {
       
       addCircleMarkers(
         data = subset(manhattan_nb, manhattan_nb$permit_yr_group == "2005 - 2009"),
-        popup = popup_content1,
         group = "2005 - 2009",
         radius = 3,
         fillOpacity = 0.6,
@@ -842,7 +843,6 @@ server <- function(input, output) {
       
       addCircleMarkers(
         data = subset(manhattan_nb, manhattan_nb$permit_yr_group == "2010 - 2014"),
-        popup = popup_content1,
         group = "2010 - 2014",
         radius = 3,
         fillOpacity = 0.6,
@@ -851,7 +851,6 @@ server <- function(input, output) {
       
       addCircleMarkers(
         data = subset(manhattan_nb, manhattan_nb$permit_yr_group == "2015 - 2019"),
-        popup = popup_content1,
         group = "2015 - 2019",
         radius = 3,
         fillOpacity = 0.6,
@@ -860,7 +859,6 @@ server <- function(input, output) {
       
       addCircleMarkers(
         data = subset(manhattan_nb, manhattan_nb$permit_yr_group == "2020 - Present"),
-        popup = popup_content1,
         group = "2020 - Present",
         radius = 3,
         fillOpacity = 0.6,
@@ -883,25 +881,20 @@ server <- function(input, output) {
   
   output$const_alt_map <- renderLeaflet({
     # Alteration Map
-    popup_content2 <- paste(#'Project Address:', manhattan_a$Complete_Address, '<br/>',
-                            'Job Status:',manhattan_a$Job_Status,'<br/>',
-                            'Transformation Type:',manhattan_a$transformation_type, '<br>',
-                            'Building Ownership:',manhattan_a$Ownership,'<br/>',
-                            'Permit Year:', manhattan_a$PermitYear)
     
     # Map Title
     map_title2 <- tags$p(tags$style('p {color: black; font-size: 20px}'),
                          tags$b('Construction in Manhattan:\n Building Alterations'))
     
     # Add ability to check the permit year group
-    manhattan_alt_map <- leaflet(manhattan_a) %>%
+    manhattan_alt_map <- 
+      leaflet(manhattan_a) %>%
       addTiles() %>%
       setView(lng = -73.98928, lat = 40.75042, zoom = 12) %>%
       addProviderTiles(providers$Wikimedia)  %>%
       
       addCircleMarkers(
         data = subset(manhattan_a, manhattan_a$permit_yr_group == "2000 - 2004"),
-        popup = popup_content2,
         group = "2000 - 2004",
         radius = 3,
         fillOpacity = 0.6,
@@ -910,7 +903,6 @@ server <- function(input, output) {
       
       addCircleMarkers(
         data = subset(manhattan_a, manhattan_a$permit_yr_group == "2005 - 2009"),
-        popup = popup_content2,
         group = "2005 - 2009",
         radius = 3,
         fillOpacity = 0.6,
@@ -919,7 +911,6 @@ server <- function(input, output) {
       
       addCircleMarkers(
         data = subset(manhattan_a, manhattan_a$permit_yr_group == "2010 - 2014"),
-        popup = popup_content2,
         group = "2010 - 2014",
         radius = 3,
         fillOpacity = 0.6,
@@ -928,7 +919,6 @@ server <- function(input, output) {
       
       addCircleMarkers(
         data = subset(manhattan_a, manhattan_a$permit_yr_group == "2015 - 2019"),
-        popup = popup_content2,
         group = "2015 - 2019",
         radius = 3,
         fillOpacity = 0.6,
@@ -937,7 +927,6 @@ server <- function(input, output) {
       
       addCircleMarkers(
         data = subset(manhattan_a, manhattan_a$permit_yr_group == "2020 - Present"),
-        popup = popup_content2,
         group = "2020 - Present",
         radius = 3,
         fillOpacity = 0.6,
@@ -1017,8 +1006,8 @@ server <- function(input, output) {
     
     network_g <- visNetwork(nodes, edges, main = list(text = 'Building Occupancy Type Transformations in Manhattan Construction',
                                                       style = 'font-family:Arial; color: black; font-size:20px; text-align:center;'),
-                            submain = list(text = '2000 to Present',
-                                           style = 'font-family:Arial; color: black; font-size:20px; text-align:center;')) %>%
+                                          submain = list(text = '2000 to Present',
+                                          style = 'font-family:Arial; color: black; font-size:20px; text-align:center;')) %>%
       visIgraphLayout(layout = 'layout_in_circle') %>% 
       visLayout(randomSeed = 13)
     network_g
