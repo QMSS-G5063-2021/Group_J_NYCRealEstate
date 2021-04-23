@@ -123,6 +123,8 @@ permit_home_value <- housing_acs %>%
   select(puma_code, year, variable, estimate) %>%
   left_join(res_permit_count, by = c("puma_code", "year"))
 
+permit_homevalue_and_rent <- rbind(permit_home_value,
+                                   permit_rental_price)
 
 renter_pct <- acs1_manhattan %>%
   filter(variable %in% c("occupied_total", "occupied_renter", "occupied_owner")) %>%
@@ -376,8 +378,6 @@ move_clean <- move %>%
   mutate(fraction = est_2019/sum(est_2019)) %>% 
   ungroup 
 
-
-
 library(dplyr)
 library(car)
 move_clean <- mutate(move_clean, variable= recode(variable, "'B07001_017'='No move'"))
@@ -391,6 +391,8 @@ names(move_clean)[2] <- "move_from"
 
 # ------ color 
 dark2 <- colorRampPalette(brewer.pal(8, "Dark2"))(10)
+
+ggplot(permit_homevalue_and_rent, aes())
 
 
 ## ---------------------------------------------------- DASHBOARD -----------------------------------------
