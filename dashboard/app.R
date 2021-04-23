@@ -503,7 +503,7 @@ ui <- navbarPage("Manhattan Construction",
                                   determined by the in-degree of each node, with the direction being dictated by the edge arrows. Clicking on a node will better highlight its 
                                   connections with other nodes, and dragging and/or rearranging the nodes can reveal additional node relationships.'),
                               br(), br(),
-                              visNetworkOutput('constr_network')
+                              visNetworkOutput('constr_network', width = "100%", height = "600px")
                             )
                           )
                  ),
@@ -643,9 +643,11 @@ ui <- navbarPage("Manhattan Construction",
                                 on new building projects, building alteration projects, and building demolition projects, in every borough of New York City. 
                                 For this analysis, building demolitions were excluded.'),
                               h3('New Buildings Data'),
+                              br(), br(),
                               DT::dataTableOutput('newbuild_dt'),
                               br(), br(), br(), br(),
                               h3('Building Alterations Data'),
+                              br(), br(),
                               DT::dataTableOutput('buildalt_dt')
                             )
                             
@@ -953,39 +955,30 @@ server <- function(input, output) {
     network_g
   })
   
-  ####
-  ################# Data table wrangling
-
-  
   ########## Data Tables
+  
+  # New Buildings DT
   output$newbuild_dt <- DT::renderDataTable({
-    # New Buildings
-    manhattan_nb_dt <- manhattan_nb %>% select(Job_Number, Job_Type, pumaname10, Complete_Address, Latitude, Longitude, 
-                                               Job_Status, PermitYear, permit_yr_group, Occ_Init, Occ_Prop, Job_Desc, 
-                                               transformation_type)
-    
-    names1 <- c('Job Number', 'Job Type', 'PUMA Name', 'Complete Address', 'Project Latitude', 'Project Longitude', 'Job Status', 
-                'Permit Year', 'Permit Year Grouping', 'Initial Occupancy Type', 'Proposed Occupancy Type', 'Occupancy Transformation Type', 
-                'Job Description')
-    
-    # New Buildings DT
+    manhattan_nb_dt <- manhattan_nb %>% select(Job_Number, Job_Type, pumaname10, Complete_Address, 
+                                               Job_Status, permit_yr_group, transformation_type, Job_Desc)
+                                               
+    names1 <- c('Job Number', 'Job Type', 'PUMA Name', 'Complete Address', 'Job Status', 
+                'Permit Year Grouping', 'Occupancy Transformation Type', 'Job Description')
+                
     newbuild_dt <- manhattan_nb_dt %>% datatable(rownames = FALSE, colnames = names1, filter = list(position = "top"), 
                                                  options = list(language = list(sSearch = "Filter:")))
     newbuild_dt
   })
   
 
+  # Alterations DT
   output$buildalt_dt <- DT::renderDataTable({
-    # Alterations
-    manhattan_alt_dt <- manhattan_a %>% select(Job_Number, Job_Type, pumaname10, Complete_Address, Latitude, Longitude, 
-                                               Job_Status, PermitYear, permit_yr_group, Occ_Init, Occ_Prop, Job_Desc, 
-                                               transformation_type)
+    manhattan_alt_dt <- manhattan_a %>% select(Job_Number, Job_Type, pumaname10, Complete_Address, 
+                                               Job_Status, permit_yr_group, transformation_type, Job_Desc)
     
-    names2 <- c('Job Number', 'Job Type', 'PUMA Name', 'Complete Address', 'Project Latitude', 'Project Longitude', 'Job Status', 
-                'Permit Year', 'Permit Year Grouping', 'Initial Occupancy Type', 'Proposed Occupancy Type', 'Occupancy Transformation Type', 
-                'Job Description')
+    names2 <- c('Job Number', 'Job Type', 'PUMA Name', 'Complete Address', 'Job Status', 
+                'Permit Year Grouping', 'Occupancy Transformation Type', 'Job Description')
     
-    # Alterations DT
     altbuild_dt <- manhattan_alt_dt %>% datatable(rownames = FALSE, colnames = names2, filter = list(position = "top"), 
                                                  options = list(language = list(sSearch = "Filter:")))
     altbuild_dt
