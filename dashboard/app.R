@@ -33,7 +33,7 @@ library(DT)
 
 #setwd('/Users/Melissa/Desktop/Data Visualization SP21/Group_J_NYCRealEstate/dashboard/')
 #setwd("C:/Users/natal/Desktop/QMSS/Spring 2021/Data_Visualization/project/Group_J_NYCRealEstate/dashboard/")
-setwd("G:/My Drive/0 Data Viz/project/Group_J_NYCRealEstate/dashboard")
+#setwd("G:/My Drive/0 Data Viz/project/Group_J_NYCRealEstate/dashboard")
 #setwd("~/Documents/GitHub/Group_J_NYCRealEstate/")
 
 ## ---------------------------------------------------- DATA -----------------------------------------
@@ -403,7 +403,7 @@ ui <- navbarPage("Manhattan Construction",
                  tabPanel("Main",
                           mainPanel(
                             
-                            img(src = "main.png", align = "right", height = "500px"),
+                            img(src = "main.png", align = "right", height = "600px"),
                             
                             h2("Manhattan Construction and Neighborhood Changes Over Time"),
                             "By Melissa S Feeney, Catherine Chen, Natalie Weng, Michelle A. Zee",
@@ -437,6 +437,13 @@ ui <- navbarPage("Manhattan Construction",
                             br(), br(),
                             
                             "5)", strong("Construction Data Reference "), "provides the construction data used in the analysis",
+                            br(), br(),
+                            
+                            "Links to the datasets used in this project:",
+                            br(),
+                            tags$a(href="https://www1.nyc.gov/site/planning/data-maps/open-data/dwn-housing-database.page#housingdevelopmentproject", "NYC Department of City Planning's (DCP) Housing Database"), br(),
+                            tags$a(href = "https://www.census.gov/programs-surveys/acs", "American Community Survey"), br(),
+                            tags$a(href = "https://archive.org/", "Internet Archive (used to access Wikipedia pages on Manhattan neighborhoods)")
                             
                             
                             )
