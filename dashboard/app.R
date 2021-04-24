@@ -33,7 +33,7 @@ library(DT)
 
 #setwd('/Users/Melissa/Desktop/Data Visualization SP21/Group_J_NYCRealEstate/dashboard/')
 #setwd("C:/Users/natal/Desktop/QMSS/Spring 2021/Data_Visualization/project/Group_J_NYCRealEstate/dashboard/")
-setwd("G:/My Drive/0 Data Viz/project/Group_J_NYCRealEstate/dashboard")
+#setwd("G:/My Drive/0 Data Viz/project/Group_J_NYCRealEstate/dashboard")
 #setwd("~/Documents/GitHub/Group_J_NYCRealEstate/")
 
 ## ---------------------------------------------------- DATA -----------------------------------------
@@ -626,19 +626,21 @@ ui <- navbarPage("Manhattan Construction",
                             
                             fluidRow(
                               column( width=6, align = "left",
-                                      fluidRow("Chosen Year vs. 2010", style = "height:600px; background-color: white;",
+                                      h4('Chosen Year', align = 'center', style='color:#1B9E77'),
+                                      h4('vs. 2010', align = 'center', style='color:#AE6D1C'),
+                                      fluidRow(style = "height:600px; background-color: white;",
                                                plotOutput("wordcloud", width = "600px", height="600px"))),
                               column(width=6, align = "left",
-                                     fluidRow("Most Used Words to Describe a Neighborhood", 
-                                              plotOutput("word_freq_graph"), style = "height:600px; background-color:white;",
+                                     h4("Most Used Words to Describe a Neighborhood", align = 'center'),
+                                     fluidRow(plotOutput("word_freq_graph"), style = "height:600px; background-color:white;",
                                               width="600px", height="600px"))),
                             br(), br(),
                             fluidRow(
                               p(""),
                               "The below plots show the number of revisions to a neighborhood's 
                                 wikipedia page through time as well as the sentiment score using a 
-                                positive/negative dictionary.",
-                              br(),
+                                positive/negative word dictionary.",
+                              br(), br(),
                               box(plotOutput("wiki_edits_through_time")),
                               box(plotOutput("sentiment_score")),
                               p("")),
@@ -647,6 +649,7 @@ ui <- navbarPage("Manhattan Construction",
                               p(""),
                               "The below shows the number of words used to describe a neighbood's 
                                 wikipedia page through time.",
+                              br(), br(),
                               plotOutput("word_count"),
                               p(""))
                           )
