@@ -462,8 +462,10 @@ ui <- navbarPage("Manhattan Construction",
                               strong('building alteration projects '), 'within the past 20 years.', strong('Permit year '), 'as opposed to completion year, 
                               is used in an effort to better illustrate project intention. For ease of use the permit years are separated into 5 groups- one
                               for permits dated 2000 to 2004, one for those dated 2005 to 2009, one for those dated 2010 to 2014, one for those dated 2015 to 2019, 
-                              and finally one for those dated 2020 to present. The permit year checkboxes on the bottom right can be checked according to time 
-                              frames of interest, and the color legend on the bottom left indicates the different permit year groups. The map uses', 
+                              and finally one for those dated 2020 to present. Each project is color-coded according to its permit date, and clicking on one of the colored
+                              markers will produce a', strong('popup box '), 'with more detailed information about the project, including', strong('address, project status, 
+                              transformation type, building ownership, and permit year. '), 'The permit year group checkboxes on the bottom right can be checked according to time 
+                              frames of interest, and the color legend on the bottom left indicates the color of different permit year groups. The map uses', 
                               strong('clustering to make it easier to see high concentrations '), 'of projects in certain areas when zoomed out. 
                               This', strong('ability to zoom in and out '), 'allows for precise location tracking.',
                               
@@ -813,7 +815,45 @@ server <- function(input, output) {
   ## ---------------------------------------------------- melissa -----------------------------------------
   
   output$const_new_map <- renderLeaflet({
-    # New Construction Map
+    # New Buildings
+    p2000_2004 <- manhattan_nb %>% filter(permit_yr_group == '2000 - 2004')
+    popup_p2000_2004 <- paste('Project Address:', p2000_2004$Complete_Address, '<br/>',
+                              'Job Status:',p2000_2004$Job_Status,'<br/>',
+                              'Transformation Type:',p2000_2004$transformation_type, '<br>',
+                              'Building Ownership:',p2000_2004$Ownership,'<br/>',
+                              'Permit Year:', p2000_2004$PermitYear,'<br>')
+    
+    
+    p2005_2009 <- manhattan_nb %>% filter(permit_yr_group == '2005 - 2009')
+    popup_p2005_2009 <- paste('Project Address:', p2005_2009$Complete_Address, '<br/>',
+                              'Job Status:',p2005_2009$Job_Status,'<br/>',
+                              'Transformation Type:',p2005_2009$transformation_type, '<br>',
+                              'Building Ownership:',p2005_2009$Ownership,'<br/>',
+                              'Permit Year:', p2005_2009$PermitYear,'<br>')
+    
+    
+    p2010_2014 <- manhattan_nb %>% filter(permit_yr_group == '2010 - 2014')
+    popup_p2010_2014 <- paste('Project Address:', p2010_2014$Complete_Address, '<br/>',
+                              'Job Status:',p2010_2014$Job_Status,'<br/>',
+                              'Transformation Type:',p2010_2014$transformation_type, '<br>',
+                              'Building Ownership:',p2010_2014$Ownership,'<br/>',
+                              'Permit Year:', p2010_2014$PermitYear,'<br>')
+    
+    
+    p2015_2019 <- manhattan_nb %>% filter(permit_yr_group == '2015 - 2019')
+    popup_p2015_2019 <- paste('Project Address:', p2015_2019$Complete_Address, '<br/>',
+                              'Job Status:',p2015_2019$Job_Status,'<br/>',
+                              'Transformation Type:',p2015_2019$transformation_type, '<br>',
+                              'Building Ownership:',p2015_2019$Ownership,'<br/>',
+                              'Permit Year:', p2015_2019$PermitYear,'<br>')
+    
+    
+    p2020_p <- manhattan_nb %>% filter(permit_yr_group == '2020 - Present')
+    popup_p2020_p <- paste('Project Address:', p2020_p$Complete_Address, '<br/>',
+                           'Job Status:',p2020_p$Job_Status,'<br/>',
+                           'Transformation Type:',p2020_p$transformation_type, '<br>',
+                           'Building Ownership:',p2020_p$Ownership,'<br/>',
+                           'Permit Year:', p2020_p$PermitYear,'<br>')
     
     # Map Title
     map_title1 <- tags$p(tags$style('p {color: black; font-size: 20px}'),
@@ -827,41 +867,46 @@ server <- function(input, output) {
       
       addCircleMarkers(
         data = subset(manhattan_nb, manhattan_nb$permit_yr_group == "2000 - 2004"),
+        popup = popup_p2000_2004,
         group = "2000 - 2004",
-        radius = 3,
-        fillOpacity = 0.6,
+        radius = 15,
+        fillOpacity = 1,
         color = "#1B9E77",
         clusterOptions = markerClusterOptions()) %>%
       
       addCircleMarkers(
         data = subset(manhattan_nb, manhattan_nb$permit_yr_group == "2005 - 2009"),
+        popup = popup_p2005_2009,
         group = "2005 - 2009",
-        radius = 3,
-        fillOpacity = 0.6,
+        radius = 15,
+        fillOpacity = 1,
         color = "#D95F02",
         clusterOptions = markerClusterOptions()) %>%
       
       addCircleMarkers(
         data = subset(manhattan_nb, manhattan_nb$permit_yr_group == "2010 - 2014"),
+        popup = popup_p2010_2014,
         group = "2010 - 2014",
-        radius = 3,
-        fillOpacity = 0.6,
+        radius = 15,
+        fillOpacity = 1,
         color = "#7570B3",
         clusterOptions = markerClusterOptions()) %>%
       
       addCircleMarkers(
         data = subset(manhattan_nb, manhattan_nb$permit_yr_group == "2015 - 2019"),
+        popup = popup_p2015_2019,
         group = "2015 - 2019",
-        radius = 3,
-        fillOpacity = 0.6,
+        radius = 15,
+        fillOpacity = 1,
         color = "#E7298A",
         clusterOptions = markerClusterOptions()) %>%
       
       addCircleMarkers(
         data = subset(manhattan_nb, manhattan_nb$permit_yr_group == "2020 - Present"),
+        popup = popup_p2020_p,
         group = "2020 - Present",
-        radius = 3,
-        fillOpacity = 0.6,
+        radius = 15,
+        fillOpacity = 1,
         color = "#666666",
         clusterOptions = markerClusterOptions()) %>%
       
@@ -879,57 +924,97 @@ server <- function(input, output) {
     manhattan_nb_map
   })
   
+  
   output$const_alt_map <- renderLeaflet({
-    # Alteration Map
+    # Map 2:Building Alterations with Checkboxes
+    p2000_2004_a <- manhattan_a %>% filter(permit_yr_group == '2000 - 2004')
+    popup_p2000_2004_a <- paste('Project Address:', p2000_2004_a$Complete_Address, '<br/>',
+                                'Job Status:',p2000_2004_a$Job_Status,'<br/>',
+                                'Transformation Type:',p2000_2004_a$transformation_type, '<br>',
+                                'Building Ownership:',p2000_2004_a$Ownership,'<br/>',
+                                'Permit Year:', p2000_2004_a$PermitYear,'<br>')
+    
+    
+    p2005_2009_a <- manhattan_a %>% filter(permit_yr_group == '2005 - 2009')
+    popup_p2005_2009_a <- paste('Project Address:', p2005_2009_a$Complete_Address, '<br/>',
+                                'Job Status:',p2005_2009_a$Job_Status,'<br/>',
+                                'Transformation Type:',p2005_2009_a$transformation_type, '<br>',
+                                'Building Ownership:',p2005_2009_a$Ownership,'<br/>',
+                                'Permit Year:', p2005_2009_a$PermitYear,'<br>')
+    
+    p2010_2014_a <- manhattan_a %>% filter(permit_yr_group == '2010 - 2014')
+    popup_p2010_2014_a <- paste('Project Address:', p2010_2014_a$Complete_Address, '<br/>',
+                                'Job Status:',p2010_2014_a$Job_Status,'<br/>',
+                                'Transformation Type:',p2010_2014_a$transformation_type, '<br>',
+                                'Building Ownership:',p2010_2014_a$Ownership,'<br/>',
+                                'Permit Year:', p2010_2014_a$PermitYear,'<br>')
+    
+    p2015_2019_a <- manhattan_a %>% filter(permit_yr_group == '2015 - 2019')
+    popup_p2015_2019_a <- paste('Project Address:', p2015_2019_a$Complete_Address, '<br/>',
+                                'Job Status:',p2015_2019_a$Job_Status,'<br/>',
+                                'Transformation Type:',p2015_2019_a$transformation_type, '<br>',
+                                'Building Ownership:',p2015_2019_a$Ownership,'<br/>',
+                                'Permit Year:', p2015_2019_a$PermitYear,'<br>')
+    
+    p2020_p_a <- manhattan_a %>% filter(permit_yr_group == '2020 - Present')
+    popup_p2020_p_a <- paste('Project Address:', p2020_p_a$Complete_Address, '<br/>',
+                             'Job Status:',p2020_p_a$Job_Status,'<br/>',
+                             'Transformation Type:',p2020_p_a$transformation_type, '<br>',
+                             'Building Ownership:',p2020_p_a$Ownership,'<br/>',
+                             'Permit Year:', p2020_p_a$PermitYear,'<br>')
     
     # Map Title
     map_title2 <- tags$p(tags$style('p {color: black; font-size: 20px}'),
                          tags$b('Construction in Manhattan:\n Building Alterations'))
     
     # Add ability to check the permit year group
-    manhattan_alt_map <- 
-      leaflet(manhattan_a) %>%
+    manhattan_alt_map <- leaflet(manhattan_a) %>%
       addTiles() %>%
       setView(lng = -73.98928, lat = 40.75042, zoom = 12) %>%
       addProviderTiles(providers$Wikimedia)  %>%
       
       addCircleMarkers(
         data = subset(manhattan_a, manhattan_a$permit_yr_group == "2000 - 2004"),
+        popup = popup_p2000_2004_a,
         group = "2000 - 2004",
-        radius = 3,
-        fillOpacity = 0.6,
+        radius = 15,
+        fillOpacity = 1,
         color = "#1B9E77",
         clusterOptions = markerClusterOptions()) %>%
       
       addCircleMarkers(
         data = subset(manhattan_a, manhattan_a$permit_yr_group == "2005 - 2009"),
+        popup = popup_p2005_2009_a,
         group = "2005 - 2009",
-        radius = 3,
-        fillOpacity = 0.6,
+        radius = 15,
+        fillOpacity = 1,
         color = "#D95F02",
         clusterOptions = markerClusterOptions()) %>%
       
       addCircleMarkers(
         data = subset(manhattan_a, manhattan_a$permit_yr_group == "2010 - 2014"),
+        popup = popup_p2010_2014_a,
         group = "2010 - 2014",
-        radius = 3,
-        fillOpacity = 0.6,
+        radius = 15,
+        fillOpacity = 1,
         color = "#7570B3",
         clusterOptions = markerClusterOptions()) %>%
       
       addCircleMarkers(
         data = subset(manhattan_a, manhattan_a$permit_yr_group == "2015 - 2019"),
+        popup = popup_p2015_2019_a,
         group = "2015 - 2019",
-        radius = 3,
-        fillOpacity = 0.6,
+        radius = 15,
+        fillOpacity = 1,
         color = "#E7298A",
         clusterOptions = markerClusterOptions()) %>%
       
       addCircleMarkers(
         data = subset(manhattan_a, manhattan_a$permit_yr_group == "2020 - Present"),
+        popup = popup_p2020_p_a,
         group = "2020 - Present",
-        radius = 3,
-        fillOpacity = 0.6,
+        radius = 15,
+        fillOpacity = 1,
         color = "#666666",
         clusterOptions = markerClusterOptions()) %>%
       
