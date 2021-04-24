@@ -31,9 +31,9 @@ library(DT)
 #rsconnect::deployApp('app.R')
 
 
-setwd('/Users/Melissa/Desktop/Data Visualization SP21/Group_J_NYCRealEstate/dashboard/')
+#setwd('/Users/Melissa/Desktop/Data Visualization SP21/Group_J_NYCRealEstate/dashboard/')
 #setwd("C:/Users/natal/Desktop/QMSS/Spring 2021/Data_Visualization/project/Group_J_NYCRealEstate/dashboard/")
-#setwd("G:/My Drive/0 Data Viz/project/Group_J_NYCRealEstate/dashboard")
+setwd("G:/My Drive/0 Data Viz/project/Group_J_NYCRealEstate/dashboard")
 #setwd("~/Documents/GitHub/Group_J_NYCRealEstate/")
 
 ## ---------------------------------------------------- DATA -----------------------------------------
@@ -406,10 +406,13 @@ ui <- navbarPage("Manhattan Construction",
                             img(src = "main.png", align = "right", height = "500px"),
                             
                             h2("Manhattan Construction and Neighborhood Changes Over Time"),
-                            p("By Melissa S Feeney, Catherine Chen, Natalie Weng, Michelle A. Zee"),
-                            br(), br(),
+                            "By Melissa S Feeney, Catherine Chen, Natalie Weng, Michelle A. Zee",
+                            br(),
                             "This project examines the Manhattan residential and commercial building construction permits 
-                               and associated changes in residents and neighborhoods from 2009 to 2019. Data used include 
+                               and associated changes in residents and neighborhoods from 2009 to 2019.",
+                            br(), br(),
+                            
+                            "Data used include 
                                construction permit data from the NYC Department of Buildings, demographic and home price 
                                data from the American 
                                Community Survey, and neighborhood descriptions scraped from archived Wikipedia pages.",
@@ -436,12 +439,6 @@ ui <- navbarPage("Manhattan Construction",
                             "5)", strong("Construction Data Reference "), "provides the construction data used in the analysis",
                             
                             
-                            
-                            
-                            
-                            # fluidRow(
-                            #   box(plotOutput("homeprice_vs_permit", height = "45vh"), height = "45vh"),
-                            #   box(plotOutput("rent_vs_permit", height = "45vh"), height = "45vh")
                             )
                           ),
                           
@@ -520,29 +517,40 @@ ui <- navbarPage("Manhattan Construction",
                           mainPanel(
                             fluidRow(
                                 h2("Explore Construction Data with Neighborhood Attributes"),
-                                p("This tab shows the relationship between housing prices (home value and rent), construction 
-                                  permits, and home ownership. There is a clear relationship between greater construction activity 
-                                  in areas of higher home prices and also higher home ownership in the same areas"),
+                                br(), 
+                                "This tab shows the relationship between housing prices (home value and rent), construction 
+                                  permits, and home ownership. By plotting all neighborhoods over the last ten years, there is a clear relationship between greater construction activity 
+                                  in areas of higher home prices and higher rents"
+                                ),
                               br(), br(),
-
+                            
+                            fluidRow(
+                              box(plotOutput("homeprice_vs_permit", height = "40vh"), height = "40vh"),
+                              box(plotOutput("rent_vs_permit", height = "40vh"), height = "40vh")),
+                            
+                            br(), br(),
+                            
+                            fluidRow(
                                 selectInput("puma_homevalue",
-                                            label = "Choose Neighborhood:",
+                                            label = "Select a neighborhood to view data in depth",
                                             choices = input_puma,
                                             selected = "Upper West Side & West Side",
                                             width = "50%")),
+                            
+
                             br(), br(),
                             
                             fluidRow(
-                              box(plotlyOutput("res_new_permit")),
-                              box(plotlyOutput("res_alt_permit"))),
+                              box(plotOutput("res_new_permit")),
+                              box(plotOutput("res_alt_permit"))),
                             br(), br(),
                             
                             fluidRow(
-                              box(plotlyOutput("rental_price")),
-                              box(plotlyOutput("home_value"))),
+                              box(plotOutput("rental_price")),
+                              box(plotOutput("home_value"))),
                             
                             fluidRow(
-                              box(plotlyOutput("renter_pct"))
+                              plotOutput("renter_pct")
                               )
                           )
                  ),
@@ -552,7 +560,8 @@ ui <- navbarPage("Manhattan Construction",
                           mainPanel(
                             fluidRow(
                               h2("Explore Neighborhood Demographics"),
-                              p("The below graphs show the representative demographics 
+                              br(), 
+                              "The below graphs show the representative demographics 
                                 of 10 the neighborhood in Manhattan. These include: median
                                 age, population, median income, gender and where they moved from.
                                 The demographics painted a vivid picture of what type of people 
@@ -562,9 +571,9 @@ ui <- navbarPage("Manhattan Construction",
                                 It is worth noting that the higher the income and the population, and the younger
                                 the population in an neighborhood gets, there is an increased activity 
                                 in new building projects.
-                                "),
+                                ",
                               
-                              
+                              br(), br(),
                               selectInput("puma",
                                           label = "Choose Neighborhood:",
                                           choices = input_puma,
@@ -592,8 +601,13 @@ ui <- navbarPage("Manhattan Construction",
                             fluidRow(
                               box(
                                 h2("How are neighborhoods described through time?"),
-                                p("The four graphs below show how a Manhattan neighborhood is described from 2010 to 2021. The word cloud comapres the words that are used to describe a neighborhood in 2010 vs. 2021. The data was collected using the way-back-machine Python API that queries historical versions of a certain webpage stored in Internet Archives."),
-                                p("Select the year to compare against 2010 below and the number of words to use in the comparison.")),
+                                br(),
+                                "The four graphs below show how a Manhattan neighborhood is described from 2010 to 2021. The word cloud comapres the words that are used to describe a neighborhood in 2010 vs. 2021. The data was collected using the way-back-machine Python API that queries historical versions of a certain webpage stored in Internet Archives.",
+                                br(), br(),
+                                
+                                "Select the year to compare against 2010 below and the number of words to use in the comparison."),
+                              br(), br(),
+                              
                               box(
                                 selectInput("nlp_neighborhood",
                                             label = "Choose Neighborhood:",
@@ -609,28 +623,29 @@ ui <- navbarPage("Manhattan Construction",
                             br(), br(),
                             
                             fluidRow(
-                              column( width=6,
+                              column( width=6, align = "left",
                                       fluidRow("Chosen Year vs. 2010", style = "height:600px; background-color: white;",
                                                plotOutput("wordcloud", width = "600px", height="600px"))),
-                              column(width=6,
+                              column(width=6, align = "left",
                                      fluidRow("Most Used Words to Describe a Neighborhood", 
                                               plotOutput("word_freq_graph"), style = "height:600px; background-color:white;",
                                               width="600px", height="600px"))),
                             br(), br(),
                             fluidRow(
                               p(""),
-                              p("The below plots show the number of revisions to a neighborhood's 
+                              "The below plots show the number of revisions to a neighborhood's 
                                 wikipedia page through time as well as the sentiment score using a 
-                                positive/negative dictionary."),
-                              box(plotlyOutput("wiki_edits_through_time")),
-                              box(plotlyOutput("sentiment_score")),
+                                positive/negative dictionary.",
+                              br(),
+                              box(plotOutput("wiki_edits_through_time")),
+                              box(plotOutput("sentiment_score")),
                               p("")),
                             br(), br(),
                             fluidRow(
                               p(""),
-                              p("The below shows the number of words used to describe a neighbood's 
-                                wikipedia page through time."),
-                              plotlyOutput("word_count"),
+                              "The below shows the number of words used to describe a neighbood's 
+                                wikipedia page through time.",
+                              plotOutput("word_count"),
                               p(""))
                           )
                  ),
@@ -668,56 +683,58 @@ server <- function(input, output) {
   
   ## ---------------------------------------------------- michelle -----------------------------------------
   output$homeprice_vs_permit <- renderPlot({
-    ggplot(permit_home_value, aes(log(permit_count), estimate, color = borough)) +
-      geom_point(alpha = 0.5) +
-      geom_smooth(method = "lm", alpha = 0.3)  +
+    ggplot(permit_home_value, aes(log(permit_count), estimate)) +
+      geom_point(alpha = 0.5, color = "#1B9E77") +
+      geom_smooth(method = "lm", alpha = 0.3) +
       scale_y_continuous(labels = scales::dollar) +
-      scale_color_brewer(palette = "Dark2", name = "Borough") +
       theme_minimal() +
       labs(x = "Number of Permits (Log Transformed)", y = "Median Home Value",
-           title = "NYC Median Home Value vs Residential Construction Permits") +
+           title = "Median Home Value vs Residential Construction Permits") +
       theme(legend.position = "none")
-  })
+    })
   
   output$rent_vs_permit <- renderPlot({
-    ggplot(permit_rental_price, aes(log(permit_count), estimate, color = borough)) +
-      geom_point(alpha = 0.5) +
+    p <- ggplot(permit_rental_price, aes(log(permit_count), estimate)) +
+      geom_point(alpha = 0.5, color = "#1B9E77") +
       geom_smooth(method = "lm", alpha = 0.3)  +
       scale_y_continuous(labels = scales::dollar) +
-      scale_color_brewer(palette = "Dark2", name = "Borough") +
+      scale_color_brewer(palette = "Dark2") +
       theme_minimal() +
-      labs(x = "NYC Number of Permits (Log Transformed)", y = "Median Gross Rent (per Month)",
+      labs(x = "Number of Permits (Log Transformed)", y = "Median Gross Rent (per Month)",
            title = "Median Rent vs Residential Construction Permits") +
       theme(legend.position = "none")
+    
+    p
   })
   
-  output$res_new_permit <- renderPlotly({
-    data <- res_permit_count %>% 
+  output$res_new_permit <- renderPlot({
+    data <- res_permit_count %>%
       filter(permit_type == "New Building",
              borough == "Manhattan",
              year >= 2009 & year < 2020) %>%
       group_by(puma_name, year) %>%
       summarise(permit_count = sum(permit_count))
-    
-    p <- ggplot(data, aes(year, permit_count)) + 
+
+    p <- ggplot(data, aes(year, permit_count)) +
       geom_point(data = subset(data, puma_name != input$puma_homevalue),
                  color = "gray",
-                 size = 2, 
+                 size = 3,
                  alpha = 0.5) +
-      geom_point(data = subset(data, puma_name == input$puma_homevalue), 
+      geom_point(data = subset(data, puma_name == input$puma_homevalue),
                  color = "#1B9E77",
-                 size = 3) +
+                 size = 5) +
       scale_x_continuous(breaks= c(2009:2019)) +
       theme_minimal() +
       labs(x = year_lab, y = permit_lab,
            title = "Residential New Building Permits")
-    
-    ggplotly(p)
-    style(p, text = paste(data$puma_name,"\n",
-                          'Value: ',data$permit_count))
+    p
+
+    # ggplotly(p)
+    # style(p, text = paste('Value: ',data$permit_count))
   })
   
-  output$res_alt_permit <- renderPlotly({
+  
+  output$res_alt_permit <- renderPlot({
     data <- res_permit_count %>%
       filter(permit_type == "Alteration",
              borough == "Manhattan",
@@ -727,30 +744,33 @@ server <- function(input, output) {
     
     p <- ggplot(data, aes(year, permit_count)) +
       geom_point(color = "gray", 
-                 size = 2, 
-                 alpha = 0.5) +
+                 size = 3, 
+                 alpha = 0.5,
+                 text = paste0(data$puma_name,"\n",
+                               'Value: ',data$permit_count)) +
       geom_point(data = subset(x = data, puma_name == input$puma_homevalue), 
                  color = "#1B9E77",
-                 size = 3) +
+                 size = 5) +
       scale_x_continuous(breaks= c(2009:2019)) +
       theme_minimal() +
       labs(x = year_lab, y = permit_lab,
            title = "Residential Alteration Permits")
     
-    ggplotly(p)
+    p 
     
-    style(p, text = paste(data$puma_name,"\n",
-                          'Value: ',data$permit_count))
+    # ggplotly(p)
+    # 
+    # style(p, text = paste('Value: ',data$permit_count))
   })
   
-  output$rental_price <- renderPlotly({
+  output$rental_price <- renderPlot({ #--------------------------------------------------
     data <- permit_rental_price %>%
       filter(permit_type == "New Building",
              borough == "Manhattan",
              year >= 2009)
     
     p <- ggplot(data, aes(x = year, y = estimate, color = puma_name)) +
-      geom_line(size = 1.5) +
+      geom_line(size = 2) +
       gghighlight(puma_name == input$puma_homevalue) +
       scale_color_manual(values = dark2) +
       scale_x_continuous(breaks= c(2009:2019)) +
@@ -759,21 +779,21 @@ server <- function(input, output) {
       labs(x = year_lab, y = "Median Gross Rent (Month)",
            title = "Median Rental Prices") +
       theme(legend.position = "none")
+    p
     
-    ggplotly(p)
-    
-    style(p, text = paste(data$puma_name,"\n",
-                          'Value: ',data$permit_count))
+    # ggplotly(p)
+    # 
+    # style(p, text = paste('Value: ',data$estimate))
   })
   
-  output$home_value <- renderPlotly({
+  output$home_value <- renderPlot({
     data <- permit_home_value %>%
       filter(permit_type == "New Building",
              borough == "Manhattan",
              year >= 2009)
     
     p <- ggplot(data, aes(x = year, y = estimate, color = puma_name)) +
-      geom_line(size = 1.5) +
+      geom_line(size = 2) +
       gghighlight(puma_name == input$puma_homevalue) +
       scale_color_manual(values = dark2) +     
       scale_x_continuous(breaks= c(2009:2019)) +
@@ -782,14 +802,13 @@ server <- function(input, output) {
       labs(x = year_lab, y = "Median Home Value",
            title = "Median Home Value") +
       theme(legend.position = "none")
-    
-    ggplotly(p)
-    
-    style(p, text = paste(data$puma_name,"\n",
-                          'Value: ',data$permit_count))
+    p
+    # ggplotly(p)
+    # 
+    # style(p, text = paste('Value: ',data$estimate))
   })
   
-  output$renter_pct <- renderPlotly({
+  output$renter_pct <- renderPlot({
     data <- renter_pct %>%
       filter(puma_name == input$puma_homevalue)
     
@@ -804,11 +823,11 @@ server <- function(input, output) {
       labs(x = year_lab, y = "Proportion",
            title = "Occupancy by Renters vs Owners") +
       theme(legend.position = "bottom")
-    
-    ggplotly(p)
-    
-    style(p, text = paste("Owner Proportion: ",round(data[data$variable == "owner_pct", ]$estimate, digits = 3),"\n",
-                          "Renter Proportion: ",round(data[data$variable == "renter_pct", ]$estimate, digits = 3)))
+    p
+    # ggplotly(p)
+    # 
+    # style(p, text = paste("Owner Proportion: ",round(data[data$variable == "owner_pct", ]$estimate, digits = 3),"\n",
+    #                       "Renter Proportion: ",round(data[data$variable == "renter_pct", ]$estimate, digits = 3)))
   })
   
   
@@ -1102,62 +1121,69 @@ server <- function(input, output) {
     
   })
   
-  output$wiki_edits_through_time <- renderPlotly({
+  output$wiki_edits_through_time <- renderPlot({
     df = timemachine %>%
-      filter(date >=2009) %>%
+      filter(year >=2009) %>%
       group_by(year, neighborhood) %>%
       summarise(total = n())
     
     g_wiki = 
       ggplot(df, aes(year, total, color=neighborhood)) +
-      geom_line(size=1)+
+      geom_line(size=2)+
       gghighlight(neighborhood == input$nlp_neighborhood)+
       scale_x_continuous(breaks= c(2009:2021)) +
       scale_color_manual(values=dark2) + 
       labs(x = "Year", y="Total Number of Wikipedia Page Revisions",
            title="Number of Wikipedia Page Revisions by Year") +
-      theme_minimal()
-    
-    ggplotly(g_wiki)
-    style(g_wiki, text = paste(df$neighborhood,
-                               "\n",'Value: ', df$total,
-                               "\n", 'Year: ', df$year))
+      theme_minimal() +
+      theme(legend.position = "none")
+    g_wiki
+    # ggplotly(g_wiki)
+    # style(g_wiki, text = paste(df$neighborhood,
+    #                            "\n",'Value: ', df$total,
+    #                            "\n", 'Year: ', df$year))
     
   })
   
-  output$sentiment_score <- renderPlotly({
+  output$sentiment_score <- renderPlot({
     
     g_sentiment = 
       ggplot(df_sentiment, aes(year, score, color=neighborhood)) +
-      geom_line(size=1) + theme_minimal() +
+      geom_line(size=2) + theme_minimal() +
       gghighlight(neighborhood == input$nlp_neighborhood)+
       scale_x_continuous(breaks= c(2009:2021)) +
       scale_color_manual(values=dark2) + 
       labs(x = "Year", y="Positive/Negative Sentiment Score",
-           title="Neighborhood Sentiment Through Time")
+           title="Neighborhood Sentiment Through Time") +
+      theme(legend.position = "none")
     
-    ggplotly(g_sentiment)
-    style(g_sentiment, text = paste(df_sentiment$neighborhood,
-                                    "\n",'Value: ', df_sentiment$score,
-                                    "\n", 'Year: ', df_sentiment$year))
+    g_sentiment
+    
+    # ggplotly(g_sentiment)
+    # style(g_sentiment, text = paste(df_sentiment$neighborhood,
+    #                                 "\n",'Value: ', df_sentiment$score,
+    #                                 "\n", 'Year: ', df_sentiment$year))
     
   })
   
-  output$word_count <- renderPlotly({
+  output$word_count <- renderPlot({
     
     g_wordcount =
       ggplot(df_wordcount, aes(year, count, color=neighborhood)) +
-      geom_line(size=1) + theme_minimal() +
+      geom_line(size=2) + theme_minimal() +
       gghighlight(neighborhood == input$nlp_neighborhood)+
       scale_x_continuous(breaks= c(2009:2021)) +
       scale_color_manual(values=dark2) + 
       labs(x = "Year", y="Median Word Count",
-           title="Wikipedia Page Length by Year")
+           title="Wikipedia Page Length by Year") +
+      theme(legend.position = "none")
     
-    ggplotly(g_wordcount)
-    style(g_wordcount, text = df_wordcount$neighborhood,
-          "\n", 'Value: ', df_wordcount$count,
-          "\n", 'Year: ', df_wordcount$year)
+    g_wordcount
+    
+    # ggplotly(g_wordcount)
+    # style(g_wordcount, text = df_wordcount$neighborhood,
+    #       "\n", 'Value: ', df_wordcount$count,
+    #       "\n", 'Year: ', df_wordcount$year)
     
   })
   
@@ -1166,7 +1192,7 @@ server <- function(input, output) {
   output$median_age <- renderPlot({
     
     ggplot(mean_group, aes(year, median_age, colour=puma_name)) + 
-      geom_line(aes(group = puma_name)) + 
+      geom_line(aes(group = puma_name), size = 2) + 
       scale_color_manual(values = dark2) +
       gghighlight(puma_name == input$puma) +
       theme_minimal() +
@@ -1180,7 +1206,7 @@ server <- function(input, output) {
   output$population <- renderPlot({
     
     ggplot(pop_group, aes(year, median_population, colour=puma_name)) + 
-      geom_line(aes(group = puma_name)) + 
+      geom_line(aes(group = puma_name), size = 2) + 
       gghighlight(puma_name == input$puma) +
       theme_minimal() +
       scale_x_continuous(breaks= c(2009:2019)) +
@@ -1197,7 +1223,7 @@ server <- function(input, output) {
   output$income <- renderPlot({
     
     ggplot(income_group, aes(x = year, y = median_income, fill = puma_name)) +
-      geom_area(color = "white", alpha = 0.4) +
+      geom_area(color = "white", alpha = 0.7) +
       scale_fill_manual(values = dark2) +
       scale_x_continuous(breaks= c(2009:2019)) +
       theme_minimal() +
